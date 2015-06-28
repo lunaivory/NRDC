@@ -55,5 +55,7 @@ int main(int argc, char const *argv[])
 
   load_images(src, ref);
 
+  nearest_neighbor_search(src, ref);
+
   return 0;
 }
