@@ -1,6 +1,6 @@
 #ifndef GLOBAL_COLOR_TRANSFORMATION_HPP
 #define GLOBAL_COLOR_TRANSFORMATION_HPP
 
-Mat GlobalColorTransformation(Mat src, Mat ref, vector<Point2d> regions);
+cv::Mat GlobalColorTransformation(cv::Mat src, cv::Mat ref, std::vector<Point2d> regions);
 
 #endif //GLOBAL_COLOR_TRANSFORMATION_HPP

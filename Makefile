@@ -15,6 +15,9 @@ $(PROG): $(OBJS)
 %.o: %.cpp
 	$(CC) $(STD) -c $(CFLAGS) $<
 
+%-o: %.cpp
+	$(CC) $(STD) $(CFLAGS) $< -o $@
+
 all: $(PROG)
 
 clean:
