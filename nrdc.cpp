@@ -1,4 +1,5 @@
 #include <opencv2/opencv.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include <iostream>
 #include <string>
 #include "nearest_neighbor_search.hpp"
@@ -8,8 +9,8 @@
 
 using namespace cv;
 
-const static std::string source_path = "source.jpg";
-const static std::string reference_path = "reference.jpg";
+const static std::string source_path = "src.png";
+const static std::string reference_path = "ref.png";
 
 void load_images(Mat & source, Mat & reference){
   bool error = false;
@@ -38,7 +39,7 @@ Mat nrdc(Mat src, Mat ref) {
     // resize(src, srcS, srcSz);
     // resize(ref, refS, refSz);
 
-    nearest_neighbor_search(srcS, refS);
+    // nearest_neighbor_search(srcS, refS);
 
     // AggregateMatchPatch();
 
@@ -51,11 +52,30 @@ Mat nrdc(Mat src, Mat ref) {
 
 int main(int argc, char const *argv[])
 {
-  Mat src, ref;
+  Mat a, b, a_nn, a_nnd;
 
-  load_images(src, ref);
+  load_images(a, b);
 
-  nearest_neighbor_search(src, ref);
+  Mat * a_nn_ptr = &a_nn;
+  Mat * a_nnd_ptr = &a_nnd;
 
+  nearest_neighbor_search(&a, &b, a_nn_ptr, a_nnd_ptr);
+  std::cerr << "nn-search done" << std::endl;
+  int x = 300;
+  int y = 400;
+  cv::Vec2b v = a_nn_ptr->at<cv::Vec2b>(x, y);
+  cv::Rect src_rect = cv::Rect(x, y, 20, 20);
+  cv::Rect ref_rect = cv::Rect(v[0], v[1], 20, 20);
+  cv::Mat src = cv::Mat(a, src_rect).clone();
+  cv::Mat ref = cv::Mat(b, ref_rect).clone();
+
+  cv::namedWindow( "w1", WINDOW_AUTOSIZE );// Create a window for display.
+  cv::namedWindow( "w2", WINDOW_AUTOSIZE );// Create a window for display.
+
+  cv::imshow( "w1", src );
+
+  cv::imshow( "w2", ref );
+
+  waitKey(0);
   return 0;
 }
