@@ -4,3 +4,7 @@
 *.sublime-project
 
 *.o
+
+nrdc
+
+*.png
