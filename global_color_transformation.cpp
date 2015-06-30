@@ -19,7 +19,10 @@ void _GetParameters(Mat &src, Mat &ref, vector<Point2d> &pt, vector<vector<doubl
 void _ApplyGlobalColor(Mat &src, Mat &ret, vector<vector<double> > &a);
 int _GetRange(uchar val);
 
-Mat GlobalColorTransformation(Mat src, Mat ref, vector<Point2d> regions) {
+/**
+ * pair<Point2d src, Point2d ref>>
+ */
+Mat GlobalColorTransformation(Mat src, Mat ref, vector<pair<Point2d, Point2d> > regions) {
 
   vector<Mat> rgbSrc, rgbRef, rgbRet;
   rgbSrc.resize(3), rgbRef.resize(3), rgbRet.resize(3);
@@ -49,11 +52,11 @@ bool _pointSort(Point2d a, Point2d b) {
   return a.x == b.x ? a.y < b.y : a.x < b.x;
 }
 
-void _GetPointsInside(Mat &src, Mat &ref, vector<Point2d> &pt, vector<Point2d> &regions) {
+void _GetPointsInside(Mat &src, Mat &ref, vector<Point2d> &pt, vector<pair<Point2d, Point2d> > &regions) {
   for (int i = 0; i < regions.size(); i++) {
-    int x = regions[i].x, y = regions[i].y;
-    //TODO yy xx cause src and ref have different coordinate!
-    Point2d val((int)src.at<uchar>(y, x), (int)ref.at<uchar>(y, x));
+    int x = regions[i].first.x, y = regions[i].first.y;
+    int xp = regions[i].second.x, yp = regions[i].second.y;
+    Point2d val((int)src.at<uchar>(y, x), (int)ref.at<uchar>(yp, xp));
     pt.push_back(val);
   }
 
@@ -139,8 +142,8 @@ int _GetRange(uchar val) {
 int main() {
   Mat src = imread("./image/src.png", CV_LOAD_IMAGE_COLOR);
   Mat ref = imread("./image/ref.png", CV_LOAD_IMAGE_COLOR);
-  resize(src, src, Size(src.cols / 2, src.rows / 2));
-  resize(ref, ref, Size(ref.cols / 2, ref.rows / 2));
+//  resize(src, src, Size(src.cols / 2, src.rows / 2));
+//  resize(ref, ref, Size(ref.cols / 2, ref.rows / 2));
 
   vector<Point2d> pt;
   for (int i = 0 ; i < src.cols; i++)
