@@ -6,3 +6,7 @@
 *.o
 
 nrdc
+
+image/old_src.png
+
+image/old_ref.png
