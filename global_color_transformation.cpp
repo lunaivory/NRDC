@@ -1,5 +1,5 @@
 
-// #define GLOBAL_COLOR_TEST
+ //#define GLOBAL_COLOR_TEST
 
 #include <cstring>
 #include <cstdio>
@@ -9,19 +9,24 @@
 #include <opencv2/core/core.hpp>
 #include <vector>
 #include <algorithm>
+#include <utility>
 
 using namespace std;
 using namespace cv;
 
 const int segN = 6;
 
-void _GetPointsInside(Mat &src, Mat &ref, vector<Point2d> &pt, vector<pair<Point2d, Point2d>> &regions);
+void _GetPointsInside(Mat &src, Mat &ref, vector<Point2d> &pt, vector<pair<Point2d, Point2d> > &regions);
 void _GetParameters(Mat &src, Mat &ref, vector<Point2d> &pt, vector<vector<double> > &a);
 void _ApplyGlobalColor(Mat &src, Mat &ret, vector<vector<double> > &a);
+
+void _GetSaturationPoints(Mat src, Mat ref, vector<pair<Point2d, Point2d> > &regions, Vec3f gray, vector<Point2f> &pt);
+void _GetSaturationScale(vector<Point2f> &pt, double &s, double &ss, double &v);
+void _ApplySaturationColor(Mat ret, double s, double ss, Vec3f gray);
 int _GetRange(uchar val);
 
 /**
- * pair<Point2d src, Point2d ref>>
+ * pair<Point2d src, Point2d ref> >
  */
 Mat GlobalColorTransformation(Mat src, Mat ref, vector<pair<Point2d, Point2d> > regions) {
 
@@ -46,10 +51,36 @@ Mat GlobalColorTransformation(Mat src, Mat ref, vector<pair<Point2d, Point2d> > 
 
   Mat ret;
   merge(rgbRet, ret);
+
+  #ifdef GLOBAL_COLOR_TEST
+  printf("RGB done\n");
+  #endif
+
+  double sUni, sYuv, vUni, vYuv, ssUni, ssYuv;
+  Vec3f UNI(1.0/3, 1.0/3, 1.0/3), YUV(0.2989, 0.587, 0.144);
+  vector<Point2f> ptUni, ptYuv;
+  
+  _GetSaturationPoints(ret, ref, regions, UNI, ptUni);
+  _GetSaturationScale(ptUni, sUni, ssUni, vUni);
+  
+  _GetSaturationPoints(ret, ref, regions, YUV, ptYuv);
+  _GetSaturationScale(ptYuv, sYuv, ssYuv, vYuv);
+ 
+  #ifdef GLOBAL_COLOR_TEST
+  printf("UNI Scale(%f +%f) = %f, YUV Scale(%f +%f) = %f\n", sUni, ssUni, vUni, sYuv, ssYuv, vYuv);
+  #endif
+
+  if (vUni < vYuv) _ApplySaturationColor(ret, sUni, ssUni, UNI);
+  else             _ApplySaturationColor(ret, sYuv, ssYuv, YUV);
+  
   return ret;
 }
 
 bool _pointSort(Point2d a, Point2d b) {
+  return a.x == b.x ? a.y < b.y : a.x < b.x;
+}
+
+bool _point2fSort(Point2f a, Point2f b) {
   return a.x == b.x ? a.y < b.y : a.x < b.x;
 }
 
@@ -138,18 +169,73 @@ int _GetRange(uchar val) {
   return segN - 1;
 }
 
+void _GetSaturationPoints(Mat src, Mat ref, vector<pair<Point2d, Point2d> > &regions, Vec3f gray, vector<Point2f> &pt) {
+  for (int i = 0; i < regions.size(); i++) {
+    int x = regions[i].first.x, y = regions[i].first.y;
+    double v = gray.dot(src.at<Vec3b>(y, x));
+
+    int xp = regions[i].second.x, yp = regions[i].second.y;
+    double vp = gray.dot(ref.at<Vec3b>(yp, xp));
+    
+    pt.push_back(Point2f(v, vp));
+  }
+  sort(pt.begin(), pt.end(), _point2fSort);
+}
+
+void _GetSaturationScale(vector<Point2f> &pt, double &s, double &ss, double &v) {
+  // can use trinary search
+  Mat A, b, x = Mat::ones(2, 1, CV_64F);
+  for (int i = 0; i < pt.size(); i++) {
+    double aa[2] = {1, pt[i].x}, bb[1] = {pt[i].y};
+    A.push_back(Mat(1, 2, CV_64F, aa));
+    b.push_back(Mat(1, 1, CV_64F, bb));
+  }
+  try {
+    solve(A, b, x, DECOMP_SVD);
+  } catch (Exception &e) {
+    const char *err_msg= e.what();
+    printf("[OPEN_CV2] %s\n", err_msg);
+  }
+  
+  cout << x << endl;
+  ss = x.at<double>(0, 0);
+  s = x.at<double>(1, 0);
+  v = 0;
+  for (int i = 0; i < pt.size(); i++) {
+    v += pow((s * pt[i].x + ss - pt[i].y), 2);
+  }
+}
+
+void _ApplySaturationColor(Mat ret, double s, double ss, Vec3f gray) {
+//  double data[3][3] = {{s - gray[0], gray[0], gray[0]},
+//                       {gray[1], s - gray[1], gray[1]},
+//                       {gray[2], gray[2], s - gray[2]} };
+
+  for (int i = 0; i < ret.cols; i++)
+    for (int j = 0; j < ret.rows; j++) {
+      Vec3b orig = ret.at<Vec3b>(j, i);
+      for (int c = 0; c < 3; c++) {
+        double val = s * orig[c] + ss;
+        ret.at<Vec3b>(j, i)[c] = (uchar) (val < 0.9 ? 0 : (val > 254? 255 : val));
+      }
+    }
+      
+}
+
+
+
 #ifdef GLOBAL_COLOR_TEST
 //testing
 int main() {
   Mat src = imread("./image/src.png", CV_LOAD_IMAGE_COLOR);
   Mat ref = imread("./image/ref.png", CV_LOAD_IMAGE_COLOR);
-//  resize(src, src, Size(src.cols / 2, src.rows / 2));
-//  resize(ref, ref, Size(ref.cols / 2, ref.rows / 2));
+  //resize(src, src, Size(src.cols / 2, src.rows / 2));
+  //resize(ref, ref, Size(ref.cols / 2, ref.rows / 2));
 
-  vector<Point2d> pt;
+  vector<pair<Point2d, Point2d> > pt;
   for (int i = 0 ; i < src.cols; i++)
     for (int j = 0; j < src.rows; j++) {
-      pt.push_back(Point2d(i, j));
+      pt.push_back(make_pair(Point2d(i, j), Point2d(i, j)));
     }
   Mat ret = GlobalColorTransformation(src, ref, pt);
 
