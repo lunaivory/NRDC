@@ -92,5 +92,8 @@ int main(int argc, char const *argv[])
 
   // cv::imshow( "w1",  combo);
   // waitKey(0);
+
+  delete a_nn_ptr;
+  delete a_nnd_ptr;
   return 0;
 }
