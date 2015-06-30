@@ -61,7 +61,9 @@ int main(int argc, char const *argv[])
   Mat * a_nn_ptr = NULL;
   Mat * a_nnd_ptr = NULL;
 
-  nearest_neighbor_search(&a, &b, a_nn_ptr, a_nnd_ptr);
+  vector<vector<Mat>> T(a.rows, vector<Mat>(a.cols));
+
+  nearest_neighbor_search(&a, &b, a_nn_ptr, a_nnd_ptr, T);
   std::cerr << "nn-search done" << std::endl;
 
   // cv::namedWindow( "w1", WINDOW_AUTOSIZE );// Create a window for display.

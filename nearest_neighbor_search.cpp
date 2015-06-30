@@ -41,7 +41,21 @@ void improve_guess(cv::Mat * a, cv::Mat * b, int ax, int ay, int &x_best, int &y
   }
 }
 
-void nearest_neighbor_search(cv::Mat * a, cv::Mat * b, cv::Mat * &a_nn, cv::Mat * &a_nnd){
+cv::Mat calculate_transformation_matrix(double dx, double dy, double ang) {
+  ang = ang / 180 * M_PI;
+  cv::Mat ret = cv::Mat::eye(3, 3, CV_64F);
+  double s = sin(ang), c = cos(ang);
+  ret.at<double>(0, 0) = s;
+  ret.at<double>(0, 1) = -c;
+  ret.at<double>(0, 2) = dx;
+  ret.at<double>(1, 0) = c;
+  ret.at<double>(1, 1) = s;
+  ret.at<double>(1, 2) = dy;
+  
+  return ret;
+}
+
+void nearest_neighbor_search(cv::Mat * a, cv::Mat * b, cv::Mat * &a_nn, cv::Mat * &a_nnd, std::vector<std::vector<cv::Mat>> &T){
   a_nn = new cv::Mat(a->rows, a->cols, CV_32SC2);
 
   a_nnd = new cv::Mat(a->rows, a->cols, CV_32SC1);
@@ -148,6 +162,14 @@ void nearest_neighbor_search(cv::Mat * a, cv::Mat * b, cv::Mat * &a_nn, cv::Mat 
     cv::imshow("w1", rand_img);
     cv::waitKey(0);
   }
+
+  for (int i = 0; i < a->cols; i++)
+    for (int j = 0; j < b->rows; j++) {
+      double dx = ;
+      double dy = ;
+      double ang = 0;
+      T[j][i] = calculate_transformation_matrix(dx, dy, ang);
+    }
 }
 
 /*
