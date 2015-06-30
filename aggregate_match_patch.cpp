@@ -23,16 +23,16 @@ bool _Consistent(Mat u, Mat v, Mat Tu, Mat Tv, bool local);
 bool _Compare(Point2d a, Point2d b);
 
 void AggregateMatchPatch(Size sz, Mat match, vector<vector <Mat> > T, vector<pair<Point2d, Point2d> > &region) {
-  
+
   region.clear();
-  
+
   _CreatePatchSet(sz, match, T, region);
 }
 
 //other functions
 
 void _CreatePatchSet(Size sz, Mat match, vector<vector<Mat> > T, vector<pair<Point2d, Point2d> > &region) {
-  
+
   const int px = sz.width * sz.height;
   vector<vector<int> > edge(px, vector<int>());
 
@@ -46,11 +46,11 @@ void _CreatePatchSet(Size sz, Mat match, vector<vector<Mat> > T, vector<pair<Poi
 
       double uData[3] = {i, j, 1};
       Mat u(3, 1, CV_64F, uData);
-      
+
       for (int k = 0; k < 8; k++) {
-      
+
         int ii = i + dx[k], jj = j + dy[k];
-        
+
         if (ii < 0 || jj< 0 || ii>= sz.width || jj >= sz.height)  continue;
         if (!_HaveMatch(match.at<int>(jj, ii)))  continue;
 
@@ -66,9 +66,9 @@ void _CreatePatchSet(Size sz, Mat match, vector<vector<Mat> > T, vector<pair<Poi
   for (int i = 0; i < sz.width; i++)
     for (int j = 0; j < sz.height; j++) {
       if (added[j][i]) continue; // will be true if in a set already
-      
+
       int itr = i + j * sz.width;
-      
+
       if (edge[itr].size() == 0)  continue;
 
       //find out the connected region using BFS
@@ -117,11 +117,11 @@ void _CreatePatchSet(Size sz, Mat match, vector<vector<Mat> > T, vector<pair<Poi
           if (!_Consistent(u, v, T[uy][ux], T[vy][vx], false))
             cnt++;
         }
-      
-      //add set if 
+
+      //add set if
       if ((double)cnt / in.size() < parRatio) {
         for (int last = 0; last < set.size(); last++) {
-          int x = set[last].x, y = set[last].y; 
+          int x = set[last].x, y = set[last].y;
           Point2d ss(x, y), rr(match.at<Vec2i>(y, x)[0], match.at<Vec2i>(y, x)[1]);
           region.push_back(make_pair(ss, rr));
         }
@@ -135,7 +135,7 @@ bool _HaveMatch(Vec2i pt) {
 }
 
 bool _Consistent(Mat u, Mat v, Mat Tu, Mat Tv, bool local) {
-  
+
   Mat vv = Tv * v - Tu * v;
   Mat uv = Tu * u - Tu * v;
   return (vv.dot(vv) / uv.dot(uv)) < (local ? parLocal : parGlobal);

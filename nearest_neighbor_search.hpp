@@ -1,13 +1,12 @@
 #ifndef NNS_H_
 #define NNS_H_
 
-#include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
 struct Patch{
   // coordinates
-  cv::Point2i point;
-  cv::Mat patch_img;
+  // cv::Point2i point;
+  // cv::Mat patch_img;
   // patch scale and rotation
   double scale, rotation;
 

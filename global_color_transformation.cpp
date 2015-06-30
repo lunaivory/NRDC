@@ -1,4 +1,5 @@
-//#define GLOBAL_COLOR_TEST
+
+// #define GLOBAL_COLOR_TEST
 
 #include <cstring>
 #include <cstdio>
@@ -38,7 +39,7 @@ Mat GlobalColorTransformation(Mat src, Mat ref, vector<pair<Point2d, Point2d> > 
   _GetPointsInside(rgbSrc[1], rgbRef[1], pt, regions);
   _GetParameters(rgbSrc[1], rgbRef[1], pt, par);
   _ApplyGlobalColor(rgbSrc[1], rgbRet[1], par);
-  
+
   _GetPointsInside(rgbSrc[2], rgbRef[2], pt, regions);
   _GetParameters(rgbSrc[2], rgbRef[2], pt, par);
   _ApplyGlobalColor(rgbSrc[2], rgbRet[2], par);
@@ -66,14 +67,14 @@ void _GetPointsInside(Mat &src, Mat &ref, vector<Point2d> &pt, vector<pair<Point
 }
 
 void _GetParameters(Mat &src, Mat &ref, vector<Point2d> &pt, vector<vector<double> > &a) {
-  
+
   double size = 255.0 / segN;
 
   int itr = 0;
   double prev = 0.0;
   for (int i = 0; i < segN; i++) {
     double range[2] = {prev, (i == segN - 1) ? 255 : (prev + size)};
-    
+
     Mat A, x, b;
     printf("[COLOR] Range %f %f\n", range[0], range[1]);
     int cnt = 0;
@@ -117,7 +118,7 @@ void _GetParameters(Mat &src, Mat &ref, vector<Point2d> &pt, vector<vector<doubl
 void _ApplyGlobalColor(Mat &src, Mat &ret, vector<vector<double> > &a) {
 
   ret = Mat::ones(src.rows, src.cols, CV_8U);
-  for (int i = 0; i < src.cols; i++) 
+  for (int i = 0; i < src.cols; i++)
     for (int j = 0; j < src.rows; j++) {
       int k = _GetRange(src.at<uchar>(j, i));
       double x = (double)src.at<uchar>(j, i);
@@ -133,7 +134,7 @@ int _GetRange(uchar val) {
   double size = 255.0 / segN;
   for (int i = 0; i < segN; i++) {
     if ((double) val <= size * ((double)(i + 1)) + 1e-9)  return i;
-  } 
+  }
   return segN - 1;
 }
 

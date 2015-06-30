@@ -1,16 +1,17 @@
 #include "nearest_neighbor_search.hpp"
 
+#include <opencv2/highgui/highgui.hpp>
 #include <stdlib.h>
 #include <vector>
 #include <random>
-// #include <cmath>
-// #include <iostream>
+#include <iostream>
 
 #ifndef MAX
 #define MAX(x, y) ((x)>(y)?(x):(y))
 #define MIN(x, y) ((x)<(y)?(x):(y))
 #endif
 
+typedef unsigned int uint;
 // values from NRDC source code
 // static std::vector<float> gainMin = {0.2f, 1.0f, 1.0f, 0.5f};  // L, a, b, ||Dx+Dy||
 // static std::vector<float> gainMax = {1.0f, 1.0f, 1.0f, 2.0f};     // L, a, b, ||Dx+Dy||
@@ -19,19 +20,19 @@
 // static std::vector<double> logScaleRange = {log(0.33f), log(3.0f)};
 // static std::vector<double> rotationRange = {(-190)*0.01745329252, 190 * 0.01745329252}; // Rotation range in radians
 
-int patch_w = 20;
-int iterations = 6;
+int patch_w = 8;
+int iterations = 4;
 int rs_max = INT_MAX;
 
 int dist(cv::Mat * a, cv::Mat * b, int ax, int ay, int bx, int by, int threshold=INT_MAX){
   int res = 0;
   for (int dy = 0; dy < patch_w; ++dy){
-    cv::Vec3b * a_row = a->ptr<cv::Vec3b>(ay+dy) + ax;
-    cv::Vec3b * b_row = b->ptr<cv::Vec3b>(by+dy) + bx;
+    cv::Vec3b * a_row = a->ptr<cv::Vec3b>(ay+dy);
+    cv::Vec3b * b_row = b->ptr<cv::Vec3b>(by+dy);
     for (int dx = 0; dx < patch_w; ++dx){
-      int d_R = (a_row[dx][0]) - (b_row[dx][0]);
-      int d_G = (a_row[dx][1]) - (b_row[dx][1]);
-      int d_B = (a_row[dx][2]) - (b_row[dx][2]);
+      int d_R = (a_row[ax + dx][0]) - (b_row[bx + dx][0]);
+      int d_G = (a_row[ax + dx][1]) - (b_row[bx + dx][1]);
+      int d_B = (a_row[ax + dx][2]) - (b_row[bx + dx][2]);
       res += d_R*d_R + d_G*d_G + d_B*d_B;
     }
     if(res >= threshold) return threshold;
@@ -41,6 +42,7 @@ int dist(cv::Mat * a, cv::Mat * b, int ax, int ay, int bx, int by, int threshold
 
 void improve_guess(cv::Mat * a, cv::Mat * b, int ax, int ay, int &x_best, int &y_best, int &d_best, int bx, int by) {
   int d = dist(a, b, ax, ay, bx, by, d_best);
+  // if(d < 0) std::cerr << "Negative distance, d = " << d << std::endl;
   if (d < d_best) {
     d_best = d;
     x_best = bx;
@@ -49,27 +51,49 @@ void improve_guess(cv::Mat * a, cv::Mat * b, int ax, int ay, int &x_best, int &y
 }
 
 void nearest_neighbor_search(cv::Mat * a, cv::Mat * b, cv::Mat * &a_nn, cv::Mat * &a_nnd){
-  a_nn = new cv::Mat(a->rows, a->cols, CV_16UC2);
-  a_nnd = new cv::Mat(a->rows, a->cols, CV_16UC1);
+  a_nn = new cv::Mat(a->rows, a->cols, CV_32SC2);
+
+  a_nnd = new cv::Mat(a->rows, a->cols, CV_32SC1);
+
   int aew = a->cols - patch_w+1, aeh = a->rows - patch_w+1;
   int bew = b->cols - patch_w+1, beh = b->rows - patch_w+1;
 
-  // initialize NNF with random values
-  std::default_random_engine gen1, gen2, gen3, gen4;
-  std::uniform_int_distribution<int> dist1(0,bew-1), dist2(0,beh-1);
-  auto rand1 = std::bind(dist1, gen1);
-  auto rand2 = std::bind(dist2, gen2);
+  std::default_random_engine gen1, gen2;
+  std::uniform_int_distribution<int> dist1(0, bew), dist2(0, beh);
+  gen1.seed(1337);
+  gen2.seed(1338);
+  auto rand1 = std::bind(dist1, gen1), rand2 = std::bind(dist2, gen2);
+
+  cv::namedWindow( "w1", cv::WINDOW_AUTOSIZE );// Create a window for display.
+  cv::Mat rand_img(a->clone());
+  // cv::Mat x_img(a->rows, a->cols, CV_8UC1);
+  // cv::Mat y_img(a->rows, a->cols, CV_8UC1);
+  // cv::waitKey(0);
+
+  cv::Vec3b tmp(0,0,0);
   for (int ay = 0; ay < aeh; ++ay){
-    cv::Vec2b * a_nn_ptr = a_nn->ptr<cv::Vec2b>(ay);
-    uchar * a_nnd_ptr = a_nnd->ptr<uchar>(ay);
+    cv::Vec2i * a_nn_ptr = a_nn->ptr<cv::Vec2i>(ay);
+    int * a_nnd_ptr = a_nnd->ptr<int>(ay);
+    // uchar * x_ptr = x_img.ptr<uchar>(ay);
+    // uchar * y_ptr = y_img.ptr<uchar>(ay);
+    cv::Vec3b * rand_ptr = rand_img.ptr<cv::Vec3b>(ay);
     for (int ax = 0; ax < aew; ++ax){
-      int bx = rand1();
-      int by = rand2();
+      int bx = rand() % (bew);
+      int by = rand() % (beh);
+      // int bx = rand1();
+      // int by = rand2();
       a_nn_ptr[ax][0] = bx;
       a_nn_ptr[ax][1] = by;
       a_nnd_ptr[ax] = dist(a, b, ax, ay, bx, by);
+      // x_ptr[ax] = bx % 255;
+      // y_ptr[ax] = by % 255;
+      cv::Vec3b * b_ptr = b->ptr<cv::Vec3b>(by);
+      rand_ptr[ax] = b_ptr[bx];
     }
   }
+
+  cv::imshow("w1", rand_img);
+  cv::waitKey(0);
 
   for (int iter = 0; iter < iterations; ++iter){
     int y_start = 0, y_end = aeh, y_change = 1;
@@ -80,27 +104,28 @@ void nearest_neighbor_search(cv::Mat * a, cv::Mat * b, cv::Mat * &a_nn, cv::Mat 
     }
 
     for (int ay = y_start; ay != y_end; ay += y_change){
+      cv::Vec3b * rand_ptr = rand_img.ptr<cv::Vec3b>(ay);
+      cv::Vec2i * v = a_nn->ptr<cv::Vec2i>(ay);
       for (int ax = x_start; ax != x_end; ax += x_change){
         // best guess so far
-        cv::Vec2b v = a_nn->at<cv::Vec2b>(ay, ax);
-        int x_best = v[0];
-        int y_best = v[1];
+        int x_best = v[ax][0];
+        int y_best = v[ax][1];
         int d_best = a_nnd->at<int>(ay, ax);
 
         // propagation: improve the current best guess by trying correspondences from left and above (right and down on even iterations)
-        if((unsigned) (ax - x_change) < (unsigned) aew){
-          cv::Vec2b v_prop = a_nn->at<cv::Vec2b>(ay, ax-x_change);
+        if((ax - x_change) >= 0 && (ax - x_change) < aew){
+          cv::Vec2i v_prop = v[ax][ax-x_change];
           int x_prop = v_prop[0] + x_change, y_prop = v_prop[1];
-          if((unsigned) x_prop < (unsigned) bew){
-            improve_guess(a,b,ax,ay,x_best, y_best, d_best, x_prop, y_prop);
+          if(x_prop >= 0 && x_prop < bew){
+            improve_guess(a,b,ax,ay,x_best,y_best,d_best,x_prop,y_prop);
           }
         }
 
-        if((unsigned) (ay - y_change) < (unsigned) aeh){
-          cv::Vec2b v_prop = a_nn->at<cv::Vec2b>(ay-y_change, ax);
+        if((ay - y_change) >= 0 && (ay - y_change) < aeh){
+          cv::Vec2i v_prop = a_nn->at<cv::Vec2i>(ay-y_change, ax);
           int x_prop = v_prop[0], y_prop = v_prop[1] + y_change;
-          if((unsigned) y_prop < (unsigned) beh){
-            improve_guess(a,b,ax,ay,x_best, y_best, d_best, x_prop, y_prop);
+          if(y_prop >= 0 && y_prop < beh){
+            improve_guess(a,b,ax,ay,x_best,y_best,d_best,x_prop,y_prop);
           }
         }
 
@@ -112,16 +137,21 @@ void nearest_neighbor_search(cv::Mat * a, cv::Mat * b, cv::Mat * &a_nn, cv::Mat 
           int x_min = MAX(x_best-mag, 0), x_max = MIN(x_best+mag+1, bew);
           int y_min = MAX(y_best-mag, 0), y_max = MIN(y_best+mag+1, beh);
 
-          int x_p = x_min + rand() % (x_max - x_min);
-          int y_p = y_min + rand() % (y_max - y_min);
-          improve_guess(a, b, ax, ay, x_best, y_best, d_best, x_p, y_p);
+          int x_p = x_min + (rand() % (x_max - x_min));
+          int y_p = y_min + (rand() % (y_max - y_min));
+          improve_guess(a,b,ax,ay,x_best,y_best,d_best,x_p,y_p);
         }
 
         v[0] = x_best;
         v[1] = y_best;
         a_nnd->at<int>(ay, ax) = d_best;
+        cv::Vec3b * b_ptr = b->ptr<cv::Vec3b>(y_best);
+        rand_ptr[ax] = b_ptr[x_best];
       }
     }
+
+    cv::imshow("w1", rand_img);
+    cv::waitKey(0);
   }
 }
 
