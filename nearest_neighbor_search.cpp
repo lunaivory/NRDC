@@ -58,11 +58,11 @@ void nearest_neighbor_search(cv::Mat * a, cv::Mat * b, cv::Mat * &a_nn, cv::Mat 
   int aew = a->cols - patch_w+1, aeh = a->rows - patch_w+1;
   int bew = b->cols - patch_w+1, beh = b->rows - patch_w+1;
 
-  std::default_random_engine gen1, gen2;
-  std::uniform_int_distribution<int> dist1(0, bew), dist2(0, beh);
-  gen1.seed(1337);
-  gen2.seed(1338);
-  auto rand1 = std::bind(dist1, gen1), rand2 = std::bind(dist2, gen2);
+  // std::default_random_engine gen1, gen2;
+  // std::uniform_int_distribution<int> dist1(0, bew), dist2(0, beh);
+  // gen1.seed(1337);
+  // gen2.seed(1338);
+  // auto rand1 = std::bind(dist1, gen1), rand2 = std::bind(dist2, gen2);
 
   cv::namedWindow( "w1", cv::WINDOW_AUTOSIZE );// Create a window for display.
   cv::Mat rand_img(a->clone());

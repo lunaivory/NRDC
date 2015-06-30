@@ -44,7 +44,7 @@ void _CreatePatchSet(Size sz, Mat match, vector<vector<Mat> > T, vector<pair<Poi
       if (i % 2 == 0 || j % 2 == 0) continue;
       if (!_HaveMatch(match.at<int>(j, i))) continue;
 
-      double uData[3] = {i, j, 1};
+      double uData[3] = {(double)i, (double)j, 1};
       Mat u(3, 1, CV_64F, uData);
 
       for (int k = 0; k < 8; k++) {
@@ -54,7 +54,7 @@ void _CreatePatchSet(Size sz, Mat match, vector<vector<Mat> > T, vector<pair<Poi
         if (ii < 0 || jj< 0 || ii>= sz.width || jj >= sz.height)  continue;
         if (!_HaveMatch(match.at<int>(jj, ii)))  continue;
 
-        double vData[3] = {ii, jj, 1};
+        double vData[3] = {(double)ii, (double)jj, 1};
         Mat v(3, 1, CV_64F, vData);
         if (_Consistent(u, v, T[j][i], T[jj][ii], true))
           edge[i + j * sz.width].push_back(ii + jj * sz.width);

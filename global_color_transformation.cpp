@@ -15,7 +15,7 @@ using namespace cv;
 
 const int segN = 6;
 
-void _GetPointsInside(Mat &src, Mat &ref, vector<Point2d> &pt, vector<Point2d> &regions);
+void _GetPointsInside(Mat &src, Mat &ref, vector<Point2d> &pt, vector<pair<Point2d, Point2d>> &regions);
 void _GetParameters(Mat &src, Mat &ref, vector<Point2d> &pt, vector<vector<double> > &a);
 void _ApplyGlobalColor(Mat &src, Mat &ret, vector<vector<double> > &a);
 int _GetRange(uchar val);
@@ -77,7 +77,7 @@ void _GetParameters(Mat &src, Mat &ref, vector<Point2d> &pt, vector<vector<doubl
 
     Mat A, x, b;
     printf("[COLOR] Range %f %f\n", range[0], range[1]);
-    int cnt = 0;
+    // int cnt = 0;
     for (; itr < pt.size() && pt[itr].x < range[1]; itr++) {
       //if (cnt > 500 || itr % segN != i) continue;
       //else  cnt++;
