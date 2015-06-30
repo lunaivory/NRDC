@@ -11,15 +11,6 @@
 #define MIN(x, y) ((x)<(y)?(x):(y))
 #endif
 
-typedef unsigned int uint;
-// values from NRDC source code
-// static std::vector<float> gainMin = {0.2f, 1.0f, 1.0f, 0.5f};  // L, a, b, ||Dx+Dy||
-// static std::vector<float> gainMax = {1.0f, 1.0f, 1.0f, 2.0f};     // L, a, b, ||Dx+Dy||
-// static std::vector<int> biasMin = {-30, -20, -20, -0};    // L, a, b, ||Dx+Dy||
-// static std::vector<int> biasMax = {20, 20, 20, 0};        // L, a, b, ||Dx+Dy||
-// static std::vector<double> logScaleRange = {log(0.33f), log(3.0f)};
-// static std::vector<double> rotationRange = {(-190)*0.01745329252, 190 * 0.01745329252}; // Rotation range in radians
-
 int patch_w = 8;
 int iterations = 4;
 int rs_max = INT_MAX;
@@ -58,11 +49,11 @@ void nearest_neighbor_search(cv::Mat * a, cv::Mat * b, cv::Mat * &a_nn, cv::Mat 
   int aew = a->cols - patch_w+1, aeh = a->rows - patch_w+1;
   int bew = b->cols - patch_w+1, beh = b->rows - patch_w+1;
 
-  // std::default_random_engine gen1, gen2;
-  // std::uniform_int_distribution<int> dist1(0, bew), dist2(0, beh);
-  // gen1.seed(1337);
-  // gen2.seed(1338);
-  // auto rand1 = std::bind(dist1, gen1), rand2 = std::bind(dist2, gen2);
+  std::default_random_engine gen1, gen2;
+  std::uniform_int_distribution<int> dist1(0, bew), dist2(0, beh);
+  gen1.seed(1337);
+  gen2.seed(1338);
+  auto rand1 = std::bind(dist1, gen1), rand2 = std::bind(dist2, gen2);
 
   cv::namedWindow( "w1", cv::WINDOW_AUTOSIZE );// Create a window for display.
   cv::Mat rand_img(a->clone());
@@ -78,10 +69,10 @@ void nearest_neighbor_search(cv::Mat * a, cv::Mat * b, cv::Mat * &a_nn, cv::Mat 
     // uchar * y_ptr = y_img.ptr<uchar>(ay);
     cv::Vec3b * rand_ptr = rand_img.ptr<cv::Vec3b>(ay);
     for (int ax = 0; ax < aew; ++ax){
-      int bx = rand() % (bew);
-      int by = rand() % (beh);
-      // int bx = rand1();
-      // int by = rand2();
+      // int bx = rand() % (bew);
+      // int by = rand() % (beh);
+      int bx = rand1();
+      int by = rand2();
       a_nn_ptr[ax][0] = bx;
       a_nn_ptr[ax][1] = by;
       a_nnd_ptr[ax] = dist(a, b, ax, ay, bx, by);
@@ -106,24 +97,28 @@ void nearest_neighbor_search(cv::Mat * a, cv::Mat * b, cv::Mat * &a_nn, cv::Mat 
     for (int ay = y_start; ay != y_end; ay += y_change){
       cv::Vec3b * rand_ptr = rand_img.ptr<cv::Vec3b>(ay);
       cv::Vec2i * v = a_nn->ptr<cv::Vec2i>(ay);
+      int * d = a_nnd->ptr<int>(ay);
+
       for (int ax = x_start; ax != x_end; ax += x_change){
         // best guess so far
         int x_best = v[ax][0];
         int y_best = v[ax][1];
-        int d_best = a_nnd->at<int>(ay, ax);
+        int d_best = d[ax];
 
         // propagation: improve the current best guess by trying correspondences from left and above (right and down on even iterations)
         if((ax - x_change) >= 0 && (ax - x_change) < aew){
           cv::Vec2i v_prop = v[ax][ax-x_change];
-          int x_prop = v_prop[0] + x_change, y_prop = v_prop[1];
+          int x_prop = v_prop[0] + x_change;
+          int y_prop = v_prop[1];
           if(x_prop >= 0 && x_prop < bew){
             improve_guess(a,b,ax,ay,x_best,y_best,d_best,x_prop,y_prop);
           }
         }
 
         if((ay - y_change) >= 0 && (ay - y_change) < aeh){
-          cv::Vec2i v_prop = a_nn->at<cv::Vec2i>(ay-y_change, ax);
-          int x_prop = v_prop[0], y_prop = v_prop[1] + y_change;
+          cv::Vec2i * v_prop = a_nn->ptr<cv::Vec2i>(ay-y_change);
+          int x_prop = v_prop[ax][0];
+          int y_prop = v_prop[ax][1] + y_change;
           if(y_prop >= 0 && y_prop < beh){
             improve_guess(a,b,ax,ay,x_best,y_best,d_best,x_prop,y_prop);
           }
@@ -142,9 +137,9 @@ void nearest_neighbor_search(cv::Mat * a, cv::Mat * b, cv::Mat * &a_nn, cv::Mat 
           improve_guess(a,b,ax,ay,x_best,y_best,d_best,x_p,y_p);
         }
 
-        v[0] = x_best;
-        v[1] = y_best;
-        a_nnd->at<int>(ay, ax) = d_best;
+        v[ax][0] = x_best;
+        v[ax][1] = y_best;
+        d[ax] = d_best;
         cv::Vec3b * b_ptr = b->ptr<cv::Vec3b>(y_best);
         rand_ptr[ax] = b_ptr[x_best];
       }
@@ -270,5 +265,14 @@ void calc_bias_gain(Patch & src_patch, Patch & ref_patch, FeatureVector (&featur
 // double bias(double src_mean, double src_gain, double ref_mean){
 //   return src_mean - (src_gain * ref_mean);
 // }
+
+typedef unsigned int uint;
+// values from NRDC source code
+// static std::vector<float> gainMin = {0.2f, 1.0f, 1.0f, 0.5f};  // L, a, b, ||Dx+Dy||
+// static std::vector<float> gainMax = {1.0f, 1.0f, 1.0f, 2.0f};     // L, a, b, ||Dx+Dy||
+// static std::vector<int> biasMin = {-30, -20, -20, -0};    // L, a, b, ||Dx+Dy||
+// static std::vector<int> biasMax = {20, 20, 20, 0};        // L, a, b, ||Dx+Dy||
+// static std::vector<double> logScaleRange = {log(0.33f), log(3.0f)};
+// static std::vector<double> rotationRange = {(-190)*0.01745329252, 190 * 0.01745329252}; // Rotation range in radians
 
 */
