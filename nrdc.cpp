@@ -69,7 +69,7 @@ int main(int argc, char const *argv[])
   std::cerr << "color apply done" << std::endl;
   cvtColor(result, result, CV_Lab2RGB);
   namedWindow("result"); imshow("result", result);
-  cv::imwrite("result.png", result);
+  cv::imwrite("image/result.png", result);
   waitKey(0);
 
  //  cv::namedWindow( "w1", WINDOW_AUTOSIZE );// Create a window for display.
