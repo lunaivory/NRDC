@@ -1,4 +1,4 @@
-//#define _AGGREGATE_MATCH_PATCH_TEST
+#define _AGGREGATE_MATCH_PATCH_TEST
 #define _SHOW_AMP_IMG
 
 #include <cstdio>
@@ -205,12 +205,14 @@ void _addPoint(int x0, int x1, int y0, int y1, int dx, int dy) {
   for (int i = x0; i < x1; i++)
     for (int j = y0; j < y1; j++) {
 //      printf("%d %d\n", j, i);
-      _match.at<Vec2i>(j, i)[0] = dx + i;
-      _match.at<Vec2i>(j, i)[1] = dy + j;
+      int _dx = dx + rand() % 4;
+      int _dy = dy + rand() % 4;
+      _match.at<Vec2i>(j, i)[0] = _dx + i;
+      _match.at<Vec2i>(j, i)[1] = _dy + j;
 
       _T[j][i] = Mat::eye(3, 3, CV_64F);
-      _T[j][i].at<double>(0, 2) = dx + rand() % 4;
-      _T[j][i].at<double>(1, 2) = dy + rand() % 4;
+      _T[j][i].at<double>(0, 2) = _dx;
+      _T[j][i].at<double>(1, 2) = _dy;
     }
 }
 #endif
