@@ -9,7 +9,7 @@
 using namespace std;
 using namespace cv;
 
-const int ITER_NUM = 1;
+const int ITER_NUM = 5;
 const double INF = 1e20;
 int MAX_RADIUS;
 double ALPHA = 0.5;
@@ -66,6 +66,9 @@ void NNS(Mat src, Mat ref, Mat &match, vector<vector<Mat> > &T) {
     ShowImage(ref, match);
   }
   MakeTransform(src, match, T);
+
+  cvtColor(src, src, CV_Lab2BGR);
+  cvtColor(ref, ref, CV_Lab2BGR);
 }
 
 void MakeTransform(Mat &src, Mat &match, vector<vector<Mat> > &T) {
