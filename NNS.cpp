@@ -9,7 +9,7 @@
 using namespace std;
 using namespace cv;
 
-const int ITER_NUM = 1;
+const int ITER_NUM = 5;
 const double INF = 1e20;
 int MAX_RADIUS;
 double ALPHA = 0.5;

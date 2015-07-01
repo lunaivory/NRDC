@@ -12,9 +12,9 @@ using namespace std;
 using namespace cv;
 
 double parLocal = 3;
-double parGlobal = 0.8;
+double parGlobal = 10;
 double parRatio = 0.5;
-double parSize = 500;
+double parSize = 100;
 double parSmall2 = 2 * 2;
 double parLarge2 = 16 * 16;
 
