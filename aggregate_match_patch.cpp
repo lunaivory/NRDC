@@ -1,4 +1,4 @@
-#define _AGGREGATE_MATCH_PATCH_TEST
+//#define _AGGREGATE_MATCH_PATCH_TEST
 #define _SHOW_AMP_IMG
 
 #include <cstdio>
@@ -12,9 +12,9 @@ using namespace std;
 using namespace cv;
 
 double parLocal = 3;
-double parGlobal = 0.8;
+double parGlobal = 10;
 double parRatio = 0.5;
-double parSize = 50;
+double parSize = 100;
 double parSmall2 = 2 * 2;
 double parLarge2 = 16 * 16;
 
@@ -51,7 +51,8 @@ void AggregateMatchPatch(Size sz, Mat match, vector<vector <Mat> > T, vector<pai
   #endif //_SHOW_AMP_IMG
 
   _CreatePatchSet(sz, match, T, region); 
-
+  
+  printf("patch match finish\n");
   #ifdef _SHOW_AMP_IMG 
   dSrc = Mat::zeros(sz, CV_8U), dRef = Mat::zeros(sz, CV_8U); 
   printf("Found %lu pairs\n", region.size());
@@ -70,7 +71,6 @@ void AggregateMatchPatch(Size sz, Mat match, vector<vector <Mat> > T, vector<pai
 //other functions
 
 void _CreatePatchSet(Size sz, Mat match, vector<vector<Mat> > T, vector<pair<Point2d, Point2d> > &region) {
-
   const int px = sz.width * sz.height;
   vector<vector<int> > edge(px, vector<int>());
 
@@ -80,7 +80,6 @@ void _CreatePatchSet(Size sz, Mat match, vector<vector<Mat> > T, vector<pair<Poi
   for (int i = 1; i < sz.width - 1; i++)
     for (int j = 1; j < sz.height - 1; j++) {
       if (!_HaveMatch(match.at<Vec2i>(j, i), sz)) continue;
-
       double uData[3] = {(double)i, (double)j, 1};
       Mat u(3, 1, CV_64F, uData);
 
@@ -89,8 +88,8 @@ void _CreatePatchSet(Size sz, Mat match, vector<vector<Mat> > T, vector<pair<Poi
         int ii = i + dx[k], jj = j + dy[k];
 
         if (ii < 0 || jj< 0 || ii>= sz.width || jj >= sz.height)  continue;
-        if (!_HaveMatch(match.at<Vec2i>(jj, ii), sz))  continue;
-
+       
+       if (!_HaveMatch(match.at<Vec2i>(jj, ii), sz))  continue;
         double vData[3] = {(double)ii, (double)jj, 1};
         Mat v(3, 1, CV_64F, vData);
         if (_Consistent(u, v, T[j][i], T[jj][ii], true))
@@ -174,7 +173,6 @@ bool _HaveMatch(Vec2i pt, Size sz) {
 }
 
 bool _Consistent(Mat u, Mat v, Mat Tu, Mat Tv, bool local) {
-
   Mat vv = Tv * v - Tu * v;
   Mat uv = Tu * u - Tu * v;
   return (vv.dot(vv) / uv.dot(uv)) < (local ? parLocal : parGlobal);

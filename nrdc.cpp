@@ -4,6 +4,7 @@
 #include <string>
 #include <random>
 #include <chrono>
+#include "NNS.hpp"
 #include "nearest_neighbor_search.hpp"
 #include "aggregate_match_patch.hpp"
 #include "global_color_transformation.hpp"
@@ -11,8 +12,8 @@
 
 using namespace cv;
 
-const static std::string source_path = "src1.png";
-const static std::string reference_path = "ref1.png";
+const static std::string source_path = "image/src.png";
+const static std::string reference_path = "image/ref1.png";
 
 void load_images(Mat & source, Mat & reference){
   bool error = false;
@@ -24,36 +25,15 @@ void load_images(Mat & source, Mat & reference){
   resize(source, source, Size(source.cols / 2, source.rows / 2));
   resize(reference, reference, Size(reference.cols / 2, reference.rows / 2));
 
+  cvtColor(source, source, CV_RGB2Lab);
+  cvtColor(reference, reference, CV_RGB2Lab);
+
   if(! (source.data && reference.data) ){ // Check for invalid input
     std::cout <<  "Could not open or find the image" << std::endl;
     error = true;
   }
   if(!error) std::cerr << "Images loaded" << std::endl;
   else std::cerr << "An error occurred";
-}
-
-Mat nrdc(Mat src, Mat ref) {
-  Mat srcS, refS;
-
-  for (int i = (1<<6); i > 0; i >>= 1) {
-    // Size srcSz = src.size();
-    // Size refSz = ref.size();
-
-    // srcSz.height /= i, srcSz.width /= i;
-    // refSz.height /= i, srcSz.width /= i;
-
-    // resize(src, srcS, srcSz);
-    // resize(ref, refS, refSz);
-
-    // nearest_neighbor_search(srcS, refS);
-
-    // AggregateMatchPatch();
-
-    // GlobalColorTransformation();
-
-    // NarrowSearchRange();
-  }
-  return refS;
 }
 
 int main(int argc, char const *argv[])
@@ -65,6 +45,7 @@ int main(int argc, char const *argv[])
   Mat * a_nn_ptr = NULL;
   Mat * a_nnd_ptr = NULL;
 
+  Mat match;
   vector<vector<Mat>> T(a.rows, vector<Mat>(a.cols));
   vector<pair<Point2d, Point2d> > region;
 
@@ -75,11 +56,18 @@ int main(int argc, char const *argv[])
   // std::cerr << "nn-search naive done" << std::endl;
 
   AggregateMatchPatch(a.size(), a_nn_ptr->clone(), T, region);
+
+  // NNS(a, b, match, T);
+  // std::cerr << "nn-search done" << std::endl;
+
+  // AggregateMatchPatch(a.size(), match, T, region);
+
   std::cerr << "aggregate done" << std::endl;
 
   Mat result;
   result = GlobalColorTransformation(a, b, region);
   std::cerr << "color apply done" << std::endl;
+  cvtColor(result, result, CV_Lab2RGB);
   namedWindow("result"); imshow("result", result);
   cv::imwrite("result.png", result);
   waitKey(0);
@@ -111,7 +99,7 @@ int main(int argc, char const *argv[])
  //  cv::imshow( "w1",  combo);
  //  waitKey(0);
 
-  delete a_nn_ptr;
-  delete a_nnd_ptr;
+  //delete a_nn_ptr;
+  //delete a_nnd_ptr;
   return 0;
 }
