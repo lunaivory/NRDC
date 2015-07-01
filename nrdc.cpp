@@ -12,8 +12,8 @@
 
 using namespace cv;
 
-const static std::string source_path = "./image/src.png";
-const static std::string reference_path = "./image/ref.png";
+const static std::string source_path = "./image/src2.png";
+const static std::string reference_path = "./image/ref2.png";
 
 void load_images(Mat & source, Mat & reference){
   bool error = false;

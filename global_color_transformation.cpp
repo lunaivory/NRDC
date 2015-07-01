@@ -186,8 +186,10 @@ void _GetSaturationScale(vector<Point2f> &pt, double &s, double &ss, double &v) 
   // can use trinary search
   Mat A, b, x = Mat::ones(2, 1, CV_64F);
   for (int i = 0; i < pt.size(); i++) {
-    double aa[2] = {1, pt[i].x}, bb[1] = {pt[i].y};
-    A.push_back(Mat(1, 2, CV_64F, aa));
+//    double aa[2] = {1, pt[i].x}, bb[1] = {pt[i].y};
+    //A.push_back(Mat(1, 2, CV_64F, aa));
+    double aa[2] = {pt[i].x}, bb[1] = {pt[i].y};
+    A.push_back(Mat(1, 1, CV_64F, aa));
     b.push_back(Mat(1, 1, CV_64F, bb));
   }
   try {
@@ -197,11 +199,12 @@ void _GetSaturationScale(vector<Point2f> &pt, double &s, double &ss, double &v) 
     printf("[OPEN_CV2] %s\n", err_msg);
   }
   
-  ss = x.at<double>(0, 0);
-  s = x.at<double>(1, 0);
+  s = x.at<double>(0, 0);
+  //ss = x.at<double>(0, 0);
+  //s = x.at<double>(1, 0);
   v = 0;
   for (int i = 0; i < pt.size(); i++) {
-    v += pow((s * pt[i].x + ss - pt[i].y), 2);
+    v += pow((ss * pt[i].x - pt[i].y), 2);// + ss - pt[i].y), 2);
   }
 }
 
@@ -214,7 +217,7 @@ void _ApplySaturationColor(Mat ret, double s, double ss, Vec3f gray) {
     for (int j = 0; j < ret.rows; j++) {
       Vec3b orig = ret.at<Vec3b>(j, i);
       for (int c = 0; c < 3; c++) {
-        double val = s * orig[c] + ss;
+        double val = s * orig[c];// + ss;
         ret.at<Vec3b>(j, i)[c] = (uchar) (val < 0.9 ? 0 : (val > 254? 255 : val));
       }
     }
