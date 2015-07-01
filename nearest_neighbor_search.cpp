@@ -163,13 +163,16 @@ void nearest_neighbor_search(cv::Mat * a, cv::Mat * b, cv::Mat * &a_nn, cv::Mat 
     cv::waitKey(0);
   }
 
-  for (int i = 0; i < a->cols; i++)
-    for (int j = 0; j < b->rows; j++) {
-      double dx = ;
-      double dy = ;
+  printf("a_nn %d %d, a %d %d\n", a_nn->rows, a_nn->cols, a->rows, a->cols);
+  for (int i = 0; i < a->rows; i++) {
+    for (int j = 0; j < a->cols; j++) {
+      cv::Vec2i v = a_nn->at<cv::Vec2i>(i, j);
+      double dx = (double)(j - v[0]);
+      double dy = (double)(j - v[1]);
       double ang = 0;
-      T[j][i] = calculate_transformation_matrix(dx, dy, ang);
+      T[i][j] = calculate_transformation_matrix(dx, dy, ang);
     }
+  }
 }
 
 /*

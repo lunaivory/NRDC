@@ -18,15 +18,52 @@ double parSmall2 = 8 * 8;
 double parLarge2 = 64 * 64;
 
 void _CreatePatchSet(Size sz, Mat match, vector<vector<Mat> > T, vector<pair<Point2d, Point2d> > &region);
-bool _HaveMatch(Vec2i pt);
+bool _HaveMatch(Vec2i pt, Size sz);
 bool _Consistent(Mat u, Mat v, Mat Tu, Mat Tv, bool local);
 bool _Compare(Point2d a, Point2d b);
 
 void AggregateMatchPatch(Size sz, Mat match, vector<vector <Mat> > T, vector<pair<Point2d, Point2d> > &region) {
 
-  region.clear();
+  printf("AG T: %lu %lu, Mat: %d %d\n", T.size(), T[0].size(), match.rows, match.cols);
 
-  _CreatePatchSet(sz, match, T, region);
+  region.clear();
+  
+  #ifdef _AGGREGATE_MATCH_PATCH_TEST
+  namedWindow("src"), namedWindow("ref");
+
+  Mat dSrc= Mat::zeros(sz, CV_8U), dRef = Mat::zeros(sz, CV_8U);
+  Mat empty = Mat::zeros(sz, CV_8U), imgShow;
+  vector<Mat> show;
+  
+  for (int i = 0; i < sz.width; i++) {
+    for (int j = 0; j < sz.height; j++) {
+      Vec2i p = match.at<Vec2i>(j, i);
+      if (!_HaveMatch(p, sz)) continue;
+      dSrc.at<uchar>(j, i) = (uchar)253;
+      dRef.at<uchar>(p[1], p[0]) = (uchar)253;
+    }
+  }
+ 
+  imshow("src", dSrc), imshow("ref", dRef);
+  
+  waitKey(0);
+  #endif //_AGGREGATE_MATCH_PATCH_TEST
+
+  _CreatePatchSet(sz, match, T, region); 
+
+  #ifdef _AGGREGATE_MATCH_PATCH_TEST 
+  dSrc = Mat::zeros(sz, CV_8U), dRef = Mat::zeros(sz, CV_8U); 
+  printf("Found %lu pairs\n", region.size());
+  for (int i = 0; i < region.size(); i++) { 
+    Point2d ps = region[i].first, pr = region[i].second; 
+    dSrc.at<uchar>(ps.y, ps.x) = 254;
+    dRef.at<uchar>(pr.y, pr.x) = 254;
+  }
+
+  imshow("src", dSrc), imshow("ref", dRef);
+
+  waitKey(0);
+  #endif //_AGGREGATE_MATCH_PATCH_TEST
 }
 
 //other functions
@@ -41,8 +78,7 @@ void _CreatePatchSet(Size sz, Mat match, vector<vector<Mat> > T, vector<pair<Poi
 
   for (int i = 1; i < sz.width - 1; i++)
     for (int j = 1; j < sz.height - 1; j++) {
-      if (i % 2 == 0 || j % 2 == 0) continue;
-      if (!_HaveMatch(match.at<int>(j, i))) continue;
+      if (!_HaveMatch(match.at<Vec2i>(j, i), sz)) continue;
 
       double uData[3] = {(double)i, (double)j, 1};
       Mat u(3, 1, CV_64F, uData);
@@ -52,7 +88,7 @@ void _CreatePatchSet(Size sz, Mat match, vector<vector<Mat> > T, vector<pair<Poi
         int ii = i + dx[k], jj = j + dy[k];
 
         if (ii < 0 || jj< 0 || ii>= sz.width || jj >= sz.height)  continue;
-        if (!_HaveMatch(match.at<int>(jj, ii)))  continue;
+        if (!_HaveMatch(match.at<Vec2i>(jj, ii), sz))  continue;
 
         double vData[3] = {(double)ii, (double)jj, 1};
         Mat v(3, 1, CV_64F, vData);
@@ -89,6 +125,7 @@ void _CreatePatchSet(Size sz, Mat match, vector<vector<Mat> > T, vector<pair<Poi
       }
 
       //eliminate small regions
+//      printf("size connected %lu\n", set.size());
       if (set.size() < parSize) continue;
 
       //get sample of size sqrt(N) from region Z
@@ -119,7 +156,8 @@ void _CreatePatchSet(Size sz, Mat match, vector<vector<Mat> > T, vector<pair<Poi
         }
 
       //add set if
-      if ((double)cnt / in.size() < parRatio) {
+      printf("ratio %f\n", (double)cnt / in.size());
+      if (1) {//(double)cnt / in.size() < parRatio) {
         for (int last = 0; last < set.size(); last++) {
           int x = set[last].x, y = set[last].y;
           Point2d ss(x, y), rr(match.at<Vec2i>(y, x)[0], match.at<Vec2i>(y, x)[1]);
@@ -130,8 +168,8 @@ void _CreatePatchSet(Size sz, Mat match, vector<vector<Mat> > T, vector<pair<Poi
   return;
 }
 
-bool _HaveMatch(Vec2i pt) {
-  return !(pt[0] == 0 && pt[1] == 0);
+bool _HaveMatch(Vec2i pt, Size sz) {
+  return (pt[0] > 0 && pt[1] > 0 && pt[0] < sz.width && pt[1] < sz.height);
 }
 
 bool _Consistent(Mat u, Mat v, Mat Tu, Mat Tv, bool local) {

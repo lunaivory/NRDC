@@ -20,6 +20,10 @@ void load_images(Mat & source, Mat & reference){
 
   source = imread(source_path, CV_LOAD_IMAGE_COLOR);
   reference = imread(reference_path, CV_LOAD_IMAGE_COLOR);
+
+  resize(source, source, Size(source.cols / 2, source.rows / 2));
+  resize(reference, reference, Size(reference.cols / 2, reference.rows / 2));
+  
   if(! (source.data && reference.data) ){ // Check for invalid input
     std::cout <<  "Could not open or find the image" << std::endl;
     error = true;
@@ -62,9 +66,19 @@ int main(int argc, char const *argv[])
   Mat * a_nnd_ptr = NULL;
 
   vector<vector<Mat>> T(a.rows, vector<Mat>(a.cols));
+  vector<pair<Point2d, Point2d> > region;
 
   nearest_neighbor_search(&a, &b, a_nn_ptr, a_nnd_ptr, T);
   std::cerr << "nn-search done" << std::endl;
+  
+  AggregateMatchPatch(a.size(), a_nn_ptr->clone(), T, region);
+  std::cerr << "aggregate done" << std::endl;
+
+  Mat result;
+  result = GlobalColorTransformation(a, b, region);
+  std::cerr << "color apply done" << std::endl;
+  namedWindow("result"); imshow("result", result);
+  waitKey(0);
 
   // cv::namedWindow( "w1", WINDOW_AUTOSIZE );// Create a window for display.
   // Size sz1 = a.size();

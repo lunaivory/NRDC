@@ -1,6 +1,9 @@
 #ifndef AGGREGATE_MATCH_PATCH_HPP
 #define AGGREGATE_MATCH_PATCH_HPP
 
-void AggregateMatchPatch(cv::Size sz, cv::Mat T, std::vector<cv::Point2d> &retion);
+using namespace std;
+using namespace cv;
+
+void AggregateMatchPatch(Size sz, Mat match, vector<vector <Mat> > T, vector<pair<Point2d, Point2d> > &region);
 
 #endif //AGGREGATE_MATCH_PATCH_HPP

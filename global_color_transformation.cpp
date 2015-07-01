@@ -140,10 +140,8 @@ void _GetParameters(Mat &src, Mat &ref, vector<Point2d> &pt, vector<vector<doubl
     a[i][2] = a[i][3] = 0;
     prev = range[1];
   }
-#ifdef GLOBAL_COLOR_TEST
   for(int i = 0; i < segN; i++)
     printf("%d = %f %f\n", i, a[i][1], a[i][0]);
-#endif //GLOBAL_COLOR_TEST
 }
 
 void _ApplyGlobalColor(Mat &src, Mat &ret, vector<vector<double> > &a) {
@@ -197,7 +195,6 @@ void _GetSaturationScale(vector<Point2f> &pt, double &s, double &ss, double &v) 
     printf("[OPEN_CV2] %s\n", err_msg);
   }
   
-  cout << x << endl;
   ss = x.at<double>(0, 0);
   s = x.at<double>(1, 0);
   v = 0;
