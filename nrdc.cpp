@@ -11,8 +11,8 @@
 
 using namespace cv;
 
-const static std::string source_path = "./src.png";
-const static std::string reference_path = "./ref.png";
+const static std::string source_path = "./image/src.png";
+const static std::string reference_path = "./image/ref.png";
 
 void load_images(Mat & source, Mat & reference){
   bool error = false;
@@ -68,8 +68,11 @@ int main(int argc, char const *argv[])
   vector<vector<Mat>> T(a.rows, vector<Mat>(a.cols));
   vector<pair<Point2d, Point2d> > region;
 
-  nearest_neighbor_search(&a, &b, a_nn_ptr, a_nnd_ptr, T);
-  std::cerr << "nn-search done" << std::endl;
+  // nns(&a, &b, a_nn_ptr, a_nnd_ptr, T);
+  // std::cerr << "nn-search done" << std::endl;
+
+  nns_naive(&a, &b, a_nn_ptr, a_nnd_ptr, T);
+  std::cerr << "nn-search naive done" << std::endl;
 
   AggregateMatchPatch(a.size(), a_nn_ptr->clone(), T, region);
   std::cerr << "aggregate done" << std::endl;
@@ -78,8 +81,9 @@ int main(int argc, char const *argv[])
   result = GlobalColorTransformation(a, b, region);
   std::cerr << "color apply done" << std::endl;
   namedWindow("result"); imshow("result", result);
+  cv::imwrite("result.png", result);
   waitKey(0);
-  
+
  //  cv::namedWindow( "w1", WINDOW_AUTOSIZE );// Create a window for display.
  //  Size sz1 = a.size();
  //  Size sz2 = b.size();
