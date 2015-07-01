@@ -24,6 +24,7 @@ void _GetSaturationPoints(Mat src, Mat ref, vector<pair<Point2d, Point2d> > &reg
 void _GetSaturationScale(vector<Point2f> &pt, double &s, double &ss, double &v);
 void _ApplySaturationColor(Mat ret, double s, double ss, Vec3f gray);
 int _GetRange(uchar val);
+void _Plot(Mat &src, Mat &ref, vector<Point2d> &pt);
 
 /**
  * pair<Point2d src, Point2d ref> >
@@ -37,16 +38,24 @@ Mat GlobalColorTransformation(Mat src, Mat ref, vector<pair<Point2d, Point2d> > 
   split(src, rgbSrc); //BGR
   split(ref, rgbRef);
 
-
   _GetPointsInside(rgbSrc[0], rgbRef[0], pt, regions);
+  #ifdef PRINT_TEST
+  _Plot(rgbSrc[0], rgbRef[0], pt);
+  #endif
   _GetParameters(rgbSrc[0], rgbRef[0], pt, par);
   _ApplyGlobalColor(rgbSrc[0], rgbRet[0], par);
 
   _GetPointsInside(rgbSrc[1], rgbRef[1], pt, regions);
+  #ifdef PRINT_TEST
+  _Plot(rgbSrc[1], rgbRef[1], pt);
+  #endif
   _GetParameters(rgbSrc[1], rgbRef[1], pt, par);
   _ApplyGlobalColor(rgbSrc[1], rgbRet[1], par);
 
   _GetPointsInside(rgbSrc[2], rgbRef[2], pt, regions);
+  #ifdef PRINT_TEST
+  _Plot(rgbSrc[2], rgbRef[2], pt);
+  #endif
   _GetParameters(rgbSrc[2], rgbRef[2], pt, par);
   _ApplyGlobalColor(rgbSrc[2], rgbRet[2], par);
 
@@ -70,6 +79,7 @@ Mat GlobalColorTransformation(Mat src, Mat ref, vector<pair<Point2d, Point2d> > 
   #ifdef GLOBAL_COLOR_TEST
   printf("UNI Scale(%f +%f) = %f, YUV Scale(%f +%f) = %f\n", sUni, ssUni, vUni, sYuv, ssYuv, vYuv);
   #endif
+
 
   if (vUni < vYuv) _ApplySaturationColor(ret, sUni, ssUni, UNI);
   else             _ApplySaturationColor(ret, sYuv, ssYuv, YUV);
@@ -221,7 +231,17 @@ void _ApplySaturationColor(Mat ret, double s, double ss, Vec3f gray) {
       
 }
 
+void _Plot(Mat &src, Mat &ref, vector<Point2d> &pt) {
+  Mat img = Mat::zeros(256, 256, CV_8U);
 
+  for (int i = 0; i < pt.size(); i++) 
+    img.at<uchar>(pt[i].y, pt[i].x) = 254;
+
+  namedWindow("graph");
+  imshow("graph", img);
+
+  waitKey(0);
+}
 
 #ifdef GLOBAL_COLOR_TEST
 //testing

@@ -66,6 +66,9 @@ void NNS(Mat src, Mat ref, Mat &match, vector<vector<Mat> > &T) {
     ShowImage(ref, match);
   }
   MakeTransform(src, match, T);
+
+  cvtColor(src, src, CV_Lab2BGR);
+  cvtColor(ref, ref, CV_Lab2BGR);
 }
 
 void MakeTransform(Mat &src, Mat &match, vector<vector<Mat> > &T) {
