@@ -9,7 +9,7 @@
 using namespace std;
 using namespace cv;
 
-const int ITER_NUM = 3;
+const int ITER_NUM = 1;
 const double INF = 1e20;
 int MAX_RADIUS;
 double ALPHA = 0.5;
@@ -21,19 +21,38 @@ void Propogation(int x, int y, int dx, int dy, Mat &src, Mat &ref, Mat &match, v
 void RandomSearch(int x, int y, int dx, int dy, Mat &src, Mat &ref, Mat &match, vector<vector<double> > &mins);
 bool GetDistance(Mat &src, Mat &ref, int x, int y, int vx, int vy, double &val);
 void ShowImage(Mat &ref, Mat &match);
+void MakeTransform(Mat &src, Mat &match, vector<vector<Mat> > &T);
 
 void NNS(Mat src, Mat ref, Mat &match, vector<vector<Mat> > &T) {
+
   _Init(src, ref, match);
   
   vector<vector<double> > mins(src.rows, vector<double>(src.cols, INF));
 
   for (int itr = 0; itr < ITER_NUM; itr++) {
     printf("INTERATION %d\n", itr);
+
     for (int i = P + 1; i < src.cols - P; i++) {
       for (int j = P + 1; j < src.rows - P; j++) {
         double val = mins[j][i];
         int posX, posY;
-        int d = (itr % 2 == 0) ? -1 : 1;
+        int d = 1;
+        
+        Propogation(i, j, d, 0, src, ref, match, mins);
+        
+        Propogation(i, j, d, d, src, ref, match, mins);
+
+        Propogation(i, j, 0, d, src, ref, match, mins);
+        RandomSearch(i, j, 0, 0, src, ref, match, mins);
+
+      }
+    }
+    
+    for (int i = src.cols - P - 1; i >= P + 1; i--) {
+      for (int j = src.rows - P - 1; j >= P + 1; j--) {
+        double val = mins[j][i];
+        int posX, posY;
+        int d = -1;
         
         Propogation(i, j, d, 0, src, ref, match, mins);
         
@@ -45,6 +64,17 @@ void NNS(Mat src, Mat ref, Mat &match, vector<vector<Mat> > &T) {
       }
     }
     ShowImage(ref, match);
+  }
+  MakeTransform(src, match, T);
+}
+
+void MakeTransform(Mat &src, Mat &match, vector<vector<Mat> > &T) {
+  for (int i = 0; i < src.cols; i++) {
+    for (int j = 0; j < src.rows; j++) {
+      T[j][i] = Mat::eye(3, 3, CV_64F);
+      T[j][i].at<double>(0, 2) = match.at<Vec2i>(j, i)[0] - i;
+      T[j][i].at<double>(1, 2) = match.at<Vec2i>(j, i)[1] - j;
+    }
   }
 }
 
@@ -125,7 +155,7 @@ void ShowImage(Mat &ref, Mat &match) {
 
   namedWindow("result");
   imshow("result", img);
-  waitKey(0);
+  //waitKey(0);
 }
 
 #ifdef TEST

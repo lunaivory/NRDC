@@ -37,6 +37,7 @@ Mat GlobalColorTransformation(Mat src, Mat ref, vector<pair<Point2d, Point2d> > 
   split(src, rgbSrc); //BGR
   split(ref, rgbRef);
 
+
   _GetPointsInside(rgbSrc[0], rgbRef[0], pt, regions);
   _GetParameters(rgbSrc[0], rgbRef[0], pt, par);
   _ApplyGlobalColor(rgbSrc[0], rgbRet[0], par);
@@ -225,8 +226,8 @@ void _ApplySaturationColor(Mat ret, double s, double ss, Vec3f gray) {
 #ifdef GLOBAL_COLOR_TEST
 //testing
 int main() {
-  Mat src = imread("./src.png", CV_LOAD_IMAGE_COLOR);
-  Mat ref = imread("./ref.png", CV_LOAD_IMAGE_COLOR);
+  Mat src = imread("./image/src.png", CV_LOAD_IMAGE_COLOR);
+  Mat ref = imread("./image/ref.png", CV_LOAD_IMAGE_COLOR);
   
   resize(src, src, Size(src.cols / 2, src.rows / 2));
   resize(ref, ref, Size(ref.cols / 2, ref.rows / 2));
