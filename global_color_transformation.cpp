@@ -1,5 +1,5 @@
 
- //#define GLOBAL_COLOR_TEST
+ #define GLOBAL_COLOR_TEST
 
 #include <cstring>
 #include <cstdio>
@@ -51,7 +51,7 @@ Mat GlobalColorTransformation(Mat src, Mat ref, vector<pair<Point2d, Point2d> > 
 
   Mat ret;
   merge(rgbRet, ret);
-
+  
   #ifdef GLOBAL_COLOR_TEST
   printf("RGB done\n");
   #endif
@@ -224,10 +224,11 @@ void _ApplySaturationColor(Mat ret, double s, double ss, Vec3f gray) {
 #ifdef GLOBAL_COLOR_TEST
 //testing
 int main() {
-  Mat src = imread("./image/src.png", CV_LOAD_IMAGE_COLOR);
-  Mat ref = imread("./image/ref.png", CV_LOAD_IMAGE_COLOR);
-  //resize(src, src, Size(src.cols / 2, src.rows / 2));
-  //resize(ref, ref, Size(ref.cols / 2, ref.rows / 2));
+  Mat src = imread("./src.png", CV_LOAD_IMAGE_COLOR);
+  Mat ref = imread("./ref.png", CV_LOAD_IMAGE_COLOR);
+  
+  resize(src, src, Size(src.cols / 2, src.rows / 2));
+  resize(ref, ref, Size(ref.cols / 2, ref.rows / 2));
 
   vector<pair<Point2d, Point2d> > pt;
   for (int i = 0 ; i < src.cols; i++)

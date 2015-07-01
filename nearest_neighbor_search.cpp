@@ -143,26 +143,27 @@ void nearest_neighbor_search(cv::Mat * a, cv::Mat * b, cv::Mat * &a_nn, cv::Mat 
   std::cout << "starting search" << std::endl;
   for (int iter = 0; iter < iterations; ++iter){
     std::cout << "Iteration: " << iter << std::endl;
-    int y_start = 0, y_end = aeh, y_change = 1;
+  
+  int y_start = 0, y_end = aeh, y_change = 1;
     int x_start = 0, x_end = aew, x_change = 1;
     if(iter % 2 == 0){
       y_start = y_end-1; y_end = -1; y_change = -1;
       x_start = x_end-1; x_end = -1; x_change = -1;
     }
-
+    
     for (int ay = y_start; ay != y_end; ay += y_change){
       cv::Vec3b * rand_ptr = rand_img.ptr<cv::Vec3b>(ay);
       cv::Vec2i * v = a_nn->ptr<cv::Vec2i>(ay);
       int * d = a_nnd->ptr<int>(ay);
       double * r = a_nnr->ptr<double>(ay);
-
+      
       for (int ax = x_start; ax != x_end; ax += x_change){
         // best guess so far
         int x_best = v[ax][0];
         int y_best = v[ax][1];
         int d_best = d[ax];
         double r_best = r[ax];
-
+        
         // propagation: improve the current best guess by trying correspondences from left and above (right and down on even iterations)
         if((ax - x_change) >= 0 && (ax - x_change) < aew){
           cv::Vec2i v_prop = v[ax][ax-x_change];
@@ -172,7 +173,6 @@ void nearest_neighbor_search(cv::Mat * a, cv::Mat * b, cv::Mat * &a_nn, cv::Mat 
             _improve_guess(a,b,ax,ay,x_best,y_best,d_best,x_prop,y_prop, r_best);
           }
         }
-
         if((ay - y_change) >= 0 && (ay - y_change) < aeh){
           cv::Vec2i * v_prop = a_nn->ptr<cv::Vec2i>(ay-y_change);
           int x_prop = v_prop[ax][0];
