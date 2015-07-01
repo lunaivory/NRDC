@@ -1,4 +1,4 @@
-#define _AGGREGATE_MATCH_PATCH_TEST
+//#define _AGGREGATE_MATCH_PATCH_TEST
 #define _SHOW_AMP_IMG
 
 #include <cstdio>
@@ -51,7 +51,8 @@ void AggregateMatchPatch(Size sz, Mat match, vector<vector <Mat> > T, vector<pai
   #endif //_SHOW_AMP_IMG
 
   _CreatePatchSet(sz, match, T, region); 
-
+  
+  printf("patch match finish\n");
   #ifdef _SHOW_AMP_IMG 
   dSrc = Mat::zeros(sz, CV_8U), dRef = Mat::zeros(sz, CV_8U); 
   printf("Found %lu pairs\n", region.size());

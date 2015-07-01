@@ -4,6 +4,7 @@
 #include <string>
 #include <random>
 #include <chrono>
+#include "NNS.hpp"
 #include "nearest_neighbor_search.hpp"
 #include "aggregate_match_patch.hpp"
 #include "global_color_transformation.hpp"
@@ -62,16 +63,18 @@ int main(int argc, char const *argv[])
 
   load_images(a, b);
 
-  Mat * a_nn_ptr = NULL;
-  Mat * a_nnd_ptr = NULL;
+//  Mat * a_nn_ptr = NULL;
+//  Mat * a_nnd_ptr = NULL;
 
+  Mat match;
   vector<vector<Mat>> T(a.rows, vector<Mat>(a.cols));
   vector<pair<Point2d, Point2d> > region;
 
-  nearest_neighbor_search(&a, &b, a_nn_ptr, a_nnd_ptr, T);
+  NNS(a, b, match, T);
+//  nearest_neighbor_search(&a, &b, a_nn_ptr, a_nnd_ptr, T);
   std::cerr << "nn-search done" << std::endl;
 
-  AggregateMatchPatch(a.size(), a_nn_ptr->clone(), T, region);
+  AggregateMatchPatch(a.size(), match, T, region);
   std::cerr << "aggregate done" << std::endl;
 
   Mat result;
@@ -107,7 +110,7 @@ int main(int argc, char const *argv[])
  //  cv::imshow( "w1",  combo);
  //  waitKey(0);
 
-  delete a_nn_ptr;
-  delete a_nnd_ptr;
+  //delete a_nn_ptr;
+  //delete a_nnd_ptr;
   return 0;
 }
