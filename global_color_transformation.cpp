@@ -1,5 +1,5 @@
 
- #define GLOBAL_COLOR_TEST
+// #define GLOBAL_COLOR_TEST
 
 #include <cstring>
 #include <cstdio>
@@ -129,6 +129,7 @@ void _GetParameters(Mat &src, Mat &ref, vector<Point2d> &pt, vector<vector<doubl
       x.at<double>(0, 0) = x.at<double>(0, 1) = 0;
       //x.data[2] = 1;
      // x.data[3] = 0;
+      printf("size %d %d\n", A.cols, A.rows);
       const char *err_msg = e.what();
       printf("[OPEN_CV] %s\n", err_msg);
     }

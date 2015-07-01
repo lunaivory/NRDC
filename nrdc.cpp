@@ -11,8 +11,8 @@
 
 using namespace cv;
 
-const static std::string source_path = "src.png";
-const static std::string reference_path = "ref.png";
+const static std::string source_path = "./src.png";
+const static std::string reference_path = "./ref.png";
 
 void load_images(Mat & source, Mat & reference){
   bool error = false;
@@ -80,33 +80,32 @@ int main(int argc, char const *argv[])
   namedWindow("result"); imshow("result", result);
   waitKey(0);
   
-  {
-   cv::namedWindow( "w1", WINDOW_AUTOSIZE );// Create a window for display.
-   Size sz1 = a.size();
-   Size sz2 = b.size();
-   Mat combo(sz1.height, sz1.width+sz2.width, CV_8UC3);
-   Mat left(combo, Rect(0, 0, sz1.width, sz1.height));
-   a.copyTo(left);
-   Mat right(combo, Rect(sz1.width, 0, sz2.width, sz2.height));
-   b.copyTo(right);
+ //  cv::namedWindow( "w1", WINDOW_AUTOSIZE );// Create a window for display.
+ //  Size sz1 = a.size();
+ //  Size sz2 = b.size();
+ //  Mat combo(sz1.height, sz1.width+sz2.width, CV_8UC3);
+ //  Mat left(combo, Rect(0, 0, sz1.width, sz1.height));
+ //  a.copyTo(left);
+ //  Mat right(combo, Rect(sz1.width, 0, sz2.width, sz2.height));
+ //  b.copyTo(right);
 
-   typedef std::chrono::high_resolution_clock myclock;
-   myclock::time_point beginning = myclock::now();
-   std::default_random_engine gen1, gen2;
-   std::uniform_int_distribution<int> dist1(0, sz1.width), dist2(0, sz1.height);
-   gen1.seed((myclock::now() - beginning).count()); gen2.seed((myclock::now() - beginning).count());
-   auto rand1 = std::bind(dist1, gen1), rand2 = std::bind(dist2, gen2);
-   for (int i = 0; i < 100; ++i){
-     // int x1 = rand() % sz1.width, y1 = rand() % sz1.height;
-     int x1 = rand1(), y1 = rand2();
-     cv::Vec2b v = a_nn_ptr->at<cv::Vec2b>(x1, y1);
-     int x2 = v[0], y2 = v[1];
-     std::cerr << "Plotting (" << x1 << "," << y1 << ")<->(" << x2+sz1.width << "," << y2 << ")" << std::endl;
-     cv::line(combo, cv::Point2d(x1, y1), cv::Point2d(x2+sz1.width, y2), Scalar( 0, 0, 0 ), 1, 8);
-   }
+ //  typedef std::chrono::high_resolution_clock myclock;
+ //  myclock::time_point beginning = myclock::now();
+ //  std::default_random_engine gen1, gen2;
+ //  std::uniform_int_distribution<int> dist1(0, sz1.width), dist2(0, sz1.height);
+ //  gen1.seed((myclock::now() - beginning).count()); gen2.seed((myclock::now() - beginning).count());
+ //  auto rand1 = std::bind(dist1, gen1), rand2 = std::bind(dist2, gen2);
+ //  for (int i = 0; i < 100; ++i){
+ //    // int x1 = rand() % sz1.width, y1 = rand() % sz1.height;
+ //    int x1 = rand1(), y1 = rand2();
+ //    cv::Vec2b v = a_nn_ptr->at<cv::Vec2b>(x1, y1);
+ //    int x2 = v[0], y2 = v[1];
+ ////    std::cerr << "Plotting (" << x1 << "," << y1 << ")<->(" << x2+sz1.width << "," << y2 << ")" << std::endl;
+ //    cv::line(combo, cv::Point2d(x1, y1), cv::Point2d(x2+sz1.width, y2), Scalar( 0, 0, 0 ), 1, 8);
+ //  }
 
-  // cv::imshow( "w1",  combo);
-  // waitKey(0);
+ //  cv::imshow( "w1",  combo);
+ //  waitKey(0);
 
   delete a_nn_ptr;
   delete a_nnd_ptr;
