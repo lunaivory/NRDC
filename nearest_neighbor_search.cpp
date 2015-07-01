@@ -143,9 +143,10 @@ void nns(cv::Mat * a, cv::Mat * b, cv::Mat * &a_nn, cv::Mat * &a_nnd, std::vecto
 
   std::cout << "starting search" << std::endl;
   for (int iter = 0; iter < iterations; ++iter){
+    cv::namedWindow( std::to_string(iter), cv::WINDOW_AUTOSIZE );
     std::cout << "Iteration: " << iter << std::endl;
 
-  int y_start = 0, y_end = aeh, y_change = 1;
+    int y_start = 0, y_end = aeh, y_change = 1;
     int x_start = 0, x_end = aew, x_change = 1;
     if(iter % 2 == 0){
       y_start = y_end-1; y_end = -1; y_change = -1;
@@ -205,7 +206,7 @@ void nns(cv::Mat * a, cv::Mat * b, cv::Mat * &a_nn, cv::Mat * &a_nnd, std::vecto
       }
     }
 
-    cv::imshow("w1", rand_img);
+    cv::imshow(std::to_string(iter), rand_img);
     cv::waitKey(0);
   }
 
