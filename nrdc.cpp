@@ -23,7 +23,7 @@ void load_images(Mat & source, Mat & reference){
 
   resize(source, source, Size(source.cols / 2, source.rows / 2));
   resize(reference, reference, Size(reference.cols / 2, reference.rows / 2));
-  
+
   if(! (source.data && reference.data) ){ // Check for invalid input
     std::cout <<  "Could not open or find the image" << std::endl;
     error = true;
@@ -70,7 +70,7 @@ int main(int argc, char const *argv[])
 
   nearest_neighbor_search(&a, &b, a_nn_ptr, a_nnd_ptr, T);
   std::cerr << "nn-search done" << std::endl;
-  
+
   AggregateMatchPatch(a.size(), a_nn_ptr->clone(), T, region);
   std::cerr << "aggregate done" << std::endl;
 
