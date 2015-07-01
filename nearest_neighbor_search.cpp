@@ -49,6 +49,8 @@ int _dist(cv::Mat * a, cv::Mat * b, int ax, int ay, int bx, int by, double & r_b
   for (double theta = -limit; theta <= limit; theta += step){
     int distance = 0;
 
+    _rotate((*b), b_rotated, theta);
+
     for (int dy = 0; dy < patch_w; ++dy){
       cv::Vec3b * a_row = a->ptr<cv::Vec3b>(ay+dy);
       cv::Vec3b * b_row = b_rotated.ptr<cv::Vec3b>(by+dy);
@@ -72,8 +74,8 @@ int _dist(cv::Mat * a, cv::Mat * b, int ax, int ay, int bx, int by, double & r_b
 }
 
 void _improve_guess(cv::Mat * a, cv::Mat * b, int ax, int ay, int & x_best, int & y_best, int & d_best, int bx, int by, double & r_best) {
-  int d = _dist(a, b, ax, ay, bx, by, r_best, d_best);
-  // int d = _dist2(a, b, ax, ay, bx, by, d_best);
+  // int d = _dist(a, b, ax, ay, bx, by, r_best, d_best);
+  int d = _dist2(a, b, ax, ay, bx, by, d_best);
   if (d < d_best) {
     d_best = d;
     x_best = bx;
