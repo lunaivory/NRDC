@@ -206,6 +206,8 @@ void nns(cv::Mat * a, cv::Mat * b, cv::Mat * &a_nn, cv::Mat * &a_nnd, std::vecto
       }
     }
 
+    // Convert color space from Lab to RGB for viewing
+    cv::cvtColor(rand_img, rand_img, CV_Lab2RGB);
     cv::imshow(std::to_string(iter), rand_img);
     cv::waitKey(0);
   }
