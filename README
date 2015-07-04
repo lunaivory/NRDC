@@ -1,0 +1,13 @@
+* OpenCV 3.0.0 is required to compile our program
+* In terminal
+>   $ cd <the directory where nrdc.cpp exists>
+>   $ make / make all
+>   $ ./nrdc
+* IMPORTANT
+There are parameters that will have to be manipulated by hands sometimes in aggregate_match_patch.cpp,
+and therefore we suggest you to try changing the parameter to get the best performance when using your own images.
+The input file should be placed under ./image folder
+reference image named ref.png
+source image named src.png
+The output file will be placed under ./image folder too
+the name of the result image will be result.png

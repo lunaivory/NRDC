@@ -25,7 +25,8 @@
 //   // double L_bias, L_gain,a_bias, a_gain, b_bias, b_gain, mag_bias, mag_gain;
 // };
 
-void nearest_neighbor_search(cv::Mat * a, cv::Mat * b, cv::Mat * &a_nn, cv::Mat * &a_nnd, std::vector<std::vector<cv::Mat>> &T);
+void nns(cv::Mat * a, cv::Mat * b, cv::Mat * &a_nn, cv::Mat * &a_nnd, std::vector<std::vector<cv::Mat>> &T);
+void nns_naive(cv::Mat * a, cv::Mat * b, cv::Mat * &a_nn, cv::Mat * &a_nnd, std::vector<std::vector<cv::Mat>> &T);
 // int _dist(cv::Mat * a, cv::Mat * b, int ax, int ay, int bx, int by, int threshold);
 // void _rotate(cv::Mat & src, cv::Mat & dst, double angle)
 

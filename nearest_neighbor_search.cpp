@@ -73,8 +73,7 @@ int _dist(cv::Mat * a, cv::Mat * b, int ax, int ay, int bx, int by, double & r_b
   return best_dist;
 }
 
-void _improve_guess(cv::Mat * a, cv::Mat * b, int ax, int ay, int & x_best, int & y_best, int & d_best, int bx, int by, double & r_best) {
-  // int d = _dist(a, b, ax, ay, bx, by, r_best, d_best);
+void _improve_guess(cv::Mat * a, cv::Mat * b, int ax, int ay, int & x_best, int & y_best, int & d_best, int bx, int by) {
   int d = _dist2(a, b, ax, ay, bx, by, d_best);
   if (d < d_best) {
     d_best = d;
@@ -97,13 +96,13 @@ cv::Mat calculate_transformation_matrix(double dx, double dy, double ang) {
   return ret;
 }
 
-void nearest_neighbor_search(cv::Mat * a, cv::Mat * b, cv::Mat * &a_nn, cv::Mat * &a_nnd, std::vector<std::vector<cv::Mat>> &T){
+void nns(cv::Mat * a, cv::Mat * b, cv::Mat * &a_nn, cv::Mat * &a_nnd, std::vector<std::vector<cv::Mat>> &T){
   center_x = a->cols / 2.;
   center_y = a->rows / 2.;
   a_nn = new cv::Mat(a->rows, a->cols, CV_32SC2);
 
   a_nnd = new cv::Mat(a->rows, a->cols, CV_32SC1);
-  cv::Mat * a_nnr = new cv::Mat(a->rows, a->cols, CV_64FC1);
+  // cv::Mat * a_nnr = new cv::Mat(a->rows, a->cols, CV_64FC1);
 
   int aew = a->cols - patch_w+1, aeh = a->rows - patch_w+1;
   int bew = b->cols - patch_w+1, beh = b->rows - patch_w+1;
@@ -144,35 +143,36 @@ void nearest_neighbor_search(cv::Mat * a, cv::Mat * b, cv::Mat * &a_nn, cv::Mat 
 
   std::cout << "starting search" << std::endl;
   for (int iter = 0; iter < iterations; ++iter){
+    cv::namedWindow( std::to_string(iter), cv::WINDOW_AUTOSIZE );
     std::cout << "Iteration: " << iter << std::endl;
-  
-  int y_start = 0, y_end = aeh, y_change = 1;
+
+    int y_start = 0, y_end = aeh, y_change = 1;
     int x_start = 0, x_end = aew, x_change = 1;
     if(iter % 2 == 0){
       y_start = y_end-1; y_end = -1; y_change = -1;
       x_start = x_end-1; x_end = -1; x_change = -1;
     }
-    
+
     for (int ay = y_start; ay != y_end; ay += y_change){
       cv::Vec3b * rand_ptr = rand_img.ptr<cv::Vec3b>(ay);
       cv::Vec2i * v = a_nn->ptr<cv::Vec2i>(ay);
       int * d = a_nnd->ptr<int>(ay);
-      double * r = a_nnr->ptr<double>(ay);
-      
+      // double * r = a_nnr->ptr<double>(ay);
+
       for (int ax = x_start; ax != x_end; ax += x_change){
         // best guess so far
         int x_best = v[ax][0];
         int y_best = v[ax][1];
         int d_best = d[ax];
-        double r_best = r[ax];
-        
+        // double r_best = r[ax];
+
         // propagation: improve the current best guess by trying correspondences from left and above (right and down on even iterations)
         if((ax - x_change) >= 0 && (ax - x_change) < aew){
           cv::Vec2i v_prop = v[ax][ax-x_change];
           int x_prop = v_prop[0] + x_change;
           int y_prop = v_prop[1];
           if(x_prop >= 0 && x_prop < bew){
-            _improve_guess(a,b,ax,ay,x_best,y_best,d_best,x_prop,y_prop, r_best);
+            _improve_guess(a,b,ax,ay,x_best,y_best,d_best,x_prop,y_prop);
           }
         }
         if((ay - y_change) >= 0 && (ay - y_change) < aeh){
@@ -180,7 +180,7 @@ void nearest_neighbor_search(cv::Mat * a, cv::Mat * b, cv::Mat * &a_nn, cv::Mat 
           int x_prop = v_prop[ax][0];
           int y_prop = v_prop[ax][1] + y_change;
           if(y_prop >= 0 && y_prop < beh){
-            _improve_guess(a,b,ax,ay,x_best,y_best,d_best,x_prop,y_prop, r_best);
+            _improve_guess(a,b,ax,ay,x_best,y_best,d_best,x_prop,y_prop);
           }
         }
 
@@ -194,23 +194,91 @@ void nearest_neighbor_search(cv::Mat * a, cv::Mat * b, cv::Mat * &a_nn, cv::Mat 
 
           int x_p = x_min + (rand() % (x_max - x_min));
           int y_p = y_min + (rand() % (y_max - y_min));
-          _improve_guess(a,b,ax,ay,x_best,y_best,d_best,x_p,y_p, r_best);
+          _improve_guess(a,b,ax,ay,x_best,y_best,d_best,x_p,y_p);
         }
 
         v[ax][0] = x_best;
         v[ax][1] = y_best;
         d[ax] = d_best;
-        r[ax] = r_best;
+        // r[ax] = r_best;
         cv::Vec3b * b_ptr = b->ptr<cv::Vec3b>(y_best);
         rand_ptr[ax] = b_ptr[x_best];
       }
     }
 
-    cv::imshow("w1", rand_img);
+    // Convert color space from Lab to RGB for viewing
+    cv::cvtColor(rand_img, rand_img, CV_Lab2RGB);
+    cv::imshow(std::to_string(iter), rand_img);
     cv::waitKey(0);
   }
 
   printf("a_nn %d %d, a %d %d\n", a_nn->rows, a_nn->cols, a->rows, a->cols);
+  for (int i = 0; i < a->rows; i++) {
+    for (int j = 0; j < a->cols; j++) {
+      cv::Vec2i v = a_nn->at<cv::Vec2i>(i, j);
+      double dx = (double)(j - v[0]);
+      double dy = (double)(j - v[1]);
+      double ang = 0;
+      T[i][j] = calculate_transformation_matrix(dx, dy, ang);
+    }
+  }
+}
+
+// int naive_search(cv::Mat * a, cv::Mat * b, int ax, int ay, int x_best, int y_best, int threshold=INT_MAX){
+//   int distance = 0;
+//   cv::Vec3b color = a->ptr<cv::Vec3b>(ay)[ax];
+
+//   for (int y = 0; y < b->rows; ++y){
+//     cv::Vec3b b_ptr = b->ptr<cv::Vec3b>(y);
+//     for (int x = 0; x < b->cols; ++x){
+//       int d_R = (a_row[ax + dx][0]) - (b_row[bx + dx][0]);
+//       int d_G = (a_row[ax + dx][1]) - (b_row[bx + dx][1]);
+//       int d_B = (a_row[ax + dx][2]) - (b_row[bx + dx][2]);
+//     }
+//   }
+
+//   for (int dy = 0; dy < patch_w; ++dy){
+//     cv::Vec3b * a_row = a->ptr<cv::Vec3b>(dy);
+//     cv::Vec3b * b_row = b->ptr<cv::Vec3b>(dy);
+//     for (int dx = 0; dx < patch_w; ++dx){
+//       int d_R = (a_row[ax + dx][0]) - (b_row[bx + dx][0]);
+//       int d_G = (a_row[ax + dx][1]) - (b_row[bx + dx][1]);
+//       int d_B = (a_row[ax + dx][2]) - (b_row[bx + dx][2]);
+//       distance += d_R*d_R + d_G*d_G + d_B*d_B;
+//     }
+//     if(distance >= threshold) return threshold;
+//   }
+//   return distance;
+// }
+
+void nns_naive(cv::Mat * a, cv::Mat * b, cv::Mat * &a_nn, cv::Mat * &a_nnd, std::vector<std::vector<cv::Mat>> &T){
+  a_nn = new cv::Mat(a->rows, a->cols, CV_32SC2);
+  a_nnd = new cv::Mat(a->rows, a->cols, CV_32SC1);
+  cv::Mat rand_img(a->clone());
+  for (int ay = 0; ay < a->rows; ++ay){
+    cv::Vec3b * rand_ptr = rand_img.ptr<cv::Vec3b>(ay);
+    cv::Vec2i * nn_ptr = a_nn->ptr<cv::Vec2i>(ay);
+    int * nnd_ptr = a_nnd->ptr<int>(ay);
+    for (int ax = 0; ax < a->cols; ++ax){
+      std::cerr << "ax: " << ax << " ay: " << ay << std::endl;
+      int x_best = -1;
+      int y_best = -1;
+      int d_best = INT_MAX;
+      for (int by = 0; by < b->rows - patch_w; ++by){
+        for (int bx = 0; bx < b->cols - patch_w; ++bx){
+          _improve_guess(a,b,ax,ay,x_best,y_best,d_best,bx,by);
+        }
+      }
+      nn_ptr[ax][0] = x_best;
+      nn_ptr[ax][1] = y_best;
+      nnd_ptr[ax] = d_best;
+      cv::Vec3b * b_ptr = b->ptr<cv::Vec3b>(y_best);
+      rand_ptr[ax] = b_ptr[x_best];
+    }
+  }
+  cv::namedWindow("w1", cv::WINDOW_AUTOSIZE);
+  cv::imshow("w1", rand_img);
+  cv::waitKey(0);
   for (int i = 0; i < a->rows; i++) {
     for (int j = 0; j < a->cols; j++) {
       cv::Vec2i v = a_nn->at<cv::Vec2i>(i, j);
