@@ -25,6 +25,8 @@ void _GetSaturationScale(vector<Point2f> &pt, double &s, double &ss, double &v);
 void _ApplySaturationColor(Mat ret, double s, double ss, Vec3f gray);
 int _GetRange(uchar val);
 void _Plot(Mat &src, Mat &ref, vector<Point2d> &pt);
+void _GetHSVSaturationScale(Mat ret, Mat ref, vector<pair<Point2d, Point2d> > &regions, double &val);
+void _GetHLSSaturationScale(Mat ret, Mat ref, vector<pair<Point2d, Point2d> > &regions, double &val, int channel);
 
 /**
  * pair<Point2d src, Point2d ref> >
@@ -66,6 +68,15 @@ Mat GlobalColorTransformation(Mat src, Mat ref, vector<pair<Point2d, Point2d> > 
   printf("RGB done\n");
   #endif
 
+
+//  double s;
+//  cvtColor(ret, ret, CV_BGR2HSV);
+//  cvtColor(ref, ref, CV_BGR2HSV);
+//  _GetHLSSaturationScale(ret, ref, regions, s, 0);
+//  _GetHLSSaturationScale(ret, ref, regions, s, 1);
+//  cvtColor(ret, ret, CV_HSV2BGR);
+//  cvtColor(ref, ref, CV_HSV2BGR);
+
   double sUni, sYuv, vUni, vYuv, ssUni, ssYuv;
   Vec3f UNI(1.0/3, 1.0/3, 1.0/3), YUV(0.2989, 0.587, 0.144);
   vector<Point2f> ptUni, ptYuv;
@@ -76,16 +87,23 @@ Mat GlobalColorTransformation(Mat src, Mat ref, vector<pair<Point2d, Point2d> > 
   _GetSaturationPoints(ret, ref, regions, YUV, ptYuv);
   _GetSaturationScale(ptYuv, sYuv, ssYuv, vYuv);
  
-  #ifdef GLOBAL_COLOR_TEST
   printf("UNI Scale(%f +%f) = %f, YUV Scale(%f +%f) = %f\n", sUni, ssUni, vUni, sYuv, ssYuv, vYuv);
-  #endif
 
 
   if (vUni < vYuv) _ApplySaturationColor(ret, sUni, ssUni, UNI);
   else             _ApplySaturationColor(ret, sYuv, ssYuv, YUV);
   
+ // double l;
+ // cvtColor(ret, ret, CV_BGR2HLS);
+ // cvtColor(ref, ref, CV_BGR2HLS);
+ // _GetHLSSaturationScale(ret, ref, regions, l, 0);
+ // _GetHLSSaturationScale(ret, ref, regions, l, 1);
+ // cvtColor(ret, ret, CV_HLS2BGR);
+ // cvtColor(ref, ref, CV_HLS2BGR);
+  
   return ret;
 }
+
 
 bool _pointSort(Point2d a, Point2d b) {
   return a.x == b.x ? a.y < b.y : a.x < b.x;
@@ -178,6 +196,67 @@ int _GetRange(uchar val) {
   }
   return segN - 1;
 }
+void _GetHLSSaturationScale(Mat ret, Mat ref, vector<pair<Point2d, Point2d> > &regions, double &val, int channel) {
+  Mat A, b, x = Mat::ones(1, 1, CV_64F);
+  for (int i = 0; i < regions.size(); i++) {
+    int sx = regions[i].first.x, sy = regions[i].first.y;
+    int rx = regions[i].second.x, ry = regions[i].second.y;
+    
+    double aa[1] = {(double)ret.at<Vec3b>(sy, sx)[channel]};
+    double bb[1] = {(double)ref.at<Vec3b>(ry, rx)[channel]};
+
+    A.push_back(Mat(1, 1, CV_64F, aa));
+    b.push_back(Mat(1, 1, CV_64F, bb));
+  }
+  
+  try {
+    solve(A, b, x, DECOMP_SVD);
+  } catch (Exception &e) {
+    const char *err_msg= e.what();
+    printf("[OPEN_CV2] %s\n", err_msg);
+  }
+
+  val = x.at<double>(0,0);
+  
+  for (int i = 0; i < ret.cols; i++) 
+    for (int j = 0; j < ret.rows; j++) {
+      double orig = (double)ret.at<Vec3b>(j, i)[channel] * val;
+      orig = (orig < 0.5 )? 0 : (orig > 254.9 ? 255: orig);
+      ret.at<Vec3b>(j, i)[channel] = orig;
+    }
+
+} 
+
+void _GetHSVSaturationScale(Mat ret, Mat ref, vector<pair<Point2d, Point2d> > &regions, double &val) {
+  Mat A, b, x = Mat::ones(1, 1, CV_64F);
+  for (int i = 0; i < regions.size(); i++) {
+    int sx = regions[i].first.x, sy = regions[i].first.y;
+    int rx = regions[i].second.x, ry = regions[i].second.y;
+    
+    double aa[1] = {(double)ret.at<Vec3b>(sy, sx)[1]};
+    double bb[1] = {(double)ref.at<Vec3b>(ry, rx)[1]};
+
+    A.push_back(Mat(1, 1, CV_64F, aa));
+    b.push_back(Mat(1, 1, CV_64F, bb));
+  }
+  
+  try {
+    solve(A, b, x, DECOMP_SVD);
+  } catch (Exception &e) {
+    const char *err_msg= e.what();
+    printf("[OPEN_CV2] %s\n", err_msg);
+  }
+
+  val = x.at<double>(0,0);
+  
+  for (int i = 0; i < ret.cols; i++) 
+    for (int j = 0; j < ret.rows; j++) {
+      double orig = (double)ret.at<Vec3b>(j, i)[1] * val;
+      orig = (orig < 0.5 )? 0 : (orig > 254.9 ? 255: orig);
+      ret.at<Vec3b>(j, i)[1] = orig;
+    }
+
+} 
 
 void _GetSaturationPoints(Mat src, Mat ref, vector<pair<Point2d, Point2d> > &regions, Vec3f gray, vector<Point2f> &pt) {
   for (int i = 0; i < regions.size(); i++) {
@@ -194,6 +273,11 @@ void _GetSaturationPoints(Mat src, Mat ref, vector<pair<Point2d, Point2d> > &reg
 
 void _GetSaturationScale(vector<Point2f> &pt, double &s, double &ss, double &v) {
   // can use trinary search
+//  double src = 0, ref = 0;
+//  for (int i = 0; i < pt.size(); i++) 
+//    src += pt[i].x, ref += pt[i].y;
+//  s = ref / src;
+//  return;
   Mat A, b, x = Mat::ones(2, 1, CV_64F);
   for (int i = 0; i < pt.size(); i++) {
 //    double aa[2] = {1, pt[i].x}, bb[1] = {pt[i].y};
@@ -219,19 +303,19 @@ void _GetSaturationScale(vector<Point2f> &pt, double &s, double &ss, double &v) 
 }
 
 void _ApplySaturationColor(Mat ret, double s, double ss, Vec3f gray) {
-//  double data[3][3] = {{s - gray[0], gray[0], gray[0]},
-//                       {gray[1], s - gray[1], gray[1]},
-//                       {gray[2], gray[2], s - gray[2]} };
+  double d[3][3] = {{s - gray[0], gray[0], gray[0]},
+                       {gray[1], s - gray[1], gray[1]},
+                       {gray[2], gray[2], s - gray[2]} };
 
   for (int i = 0; i < ret.cols; i++)
     for (int j = 0; j < ret.rows; j++) {
       Vec3b orig = ret.at<Vec3b>(j, i);
       for (int c = 0; c < 3; c++) {
         double val = s * orig[c];// + ss;
+        //double val = d[c][0] * ret.at<Vec3b>(j, i)[0] + d[c][1] * ret.at<Vec3b>(j, i)[1] + d[c][2] * ret.at<Vec3b>(j, i)[2];
         ret.at<Vec3b>(j, i)[c] = (uchar) (val < 0.9 ? 0 : (val > 254? 255 : val));
       }
     }
-      
 }
 
 void _Plot(Mat &src, Mat &ref, vector<Point2d> &pt) {

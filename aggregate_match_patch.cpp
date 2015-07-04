@@ -11,10 +11,10 @@
 using namespace std;
 using namespace cv;
 
-double parLocal = 10;
-double parGlobal = 0.8;
+double parLocal = 50;
+double parGlobal = 40.8;
 double parRatio = 0.5;
-double parSize = 100;
+double parSize = 50;
 double parSmall2 = 2 * 2;
 double parLarge2 = 16 * 16;
 
@@ -47,7 +47,7 @@ void AggregateMatchPatch(Size sz, Mat match, vector<vector <Mat> > T, vector<pai
  
   imshow("src", dSrc), imshow("ref", dRef);
   
-  waitKey(0);
+  //waitKey(0);
   #endif //_SHOW_AMP_IMG
 
   _CreatePatchSet(sz, match, T, region); 
@@ -64,7 +64,7 @@ void AggregateMatchPatch(Size sz, Mat match, vector<vector <Mat> > T, vector<pai
 
   imshow("src", dSrc), imshow("ref", dRef);
 
-  waitKey(0);
+  //waitKey(0);
   #endif //_SHOW_AMP_IMG
 }
 

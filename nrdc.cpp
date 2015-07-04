@@ -82,6 +82,8 @@ int main(int argc, char const *argv[])
   std::cerr << "color apply done" << std::endl;
   namedWindow("result"); imshow("result", result);
   waitKey(0);
+
+  imwrite("./image/result.png", result);
   
  //  cv::namedWindow( "w1", WINDOW_AUTOSIZE );// Create a window for display.
  //  Size sz1 = a.size();
